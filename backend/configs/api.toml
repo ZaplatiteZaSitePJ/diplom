@@ -1,0 +1,12 @@
+[config]
+bind_addr = ":8080"
+logger_level = "debug"
+
+[storage]
+postgres_uri = "host=localhost port=5432 user=postgres password=postgres dbname=t1-accounter sslmode=disable"
+
+[jwt]
+access_secret = "ndvfk3-fgjldsfZsdfIJFM5958zlknmgfd-145"
+refresh_secret = "vmOMfdk4385#@)$*fg,ie4Doi43M<DFKLL43k"
+access_ttl = 20
+refresh_ttl = 30
