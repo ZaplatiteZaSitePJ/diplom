@@ -2,12 +2,11 @@ import ButtonText from "@shared/ui/ui-kit/buttons/ButtonText";
 import styles from "./Storages.module.scss";
 import Modal from "@features/modal/Modal";
 import { useState } from "react";
-import { useRevalidator } from "react-router-dom";
 import StorageSearch from "@widgets/Storages/StorageSearch/StorageSearch";
+import StorageForm from "@widgets/Storages/StorageForm/StorageForm";
 
 export default function Storages() {
 	const [isCreation, setIsCreation] = useState(false);
-	const { revalidate } = useRevalidator();
 
 	const handleCreateStorage = () => {
 		setIsCreation(true);
@@ -36,13 +35,12 @@ export default function Storages() {
 					onClose={() => setIsCreation(false)}
 				>
 					<></>
-					{/* <StorageForm
+					<StorageForm
 						mode="create"
 						handleClose={() => {
 							setIsCreation(false);
-							revalidate();
 						}}
-					/> */}
+					/>
 				</Modal>
 			)}
 		</main>

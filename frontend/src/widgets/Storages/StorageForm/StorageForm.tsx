@@ -6,6 +6,10 @@ import { nameOption } from "@features/formElements/options/name.options";
 import { ButtonText, Input } from "@shared/ui/ui-kit";
 import { useEffect, type FC } from "react";
 import CityField from "@features/formElements/CityField";
+import {
+	useCreateStorageMutation,
+	useUpdateStorageMutation,
+} from "@app/api/storage/storageAPI";
 // import postStorage from "@features/api/axios/requests/storages/postStorage";
 // import putStorage from "@features/api/axios/requests/storages/putStorage";
 
@@ -40,35 +44,34 @@ const StorageForm: FC<StorageFormProps> = ({
 		reset(storage);
 	}, [storage, reset]);
 
+	const [triggerPost] = useCreateStorageMutation();
+	const [trigerUpdate] = useUpdateStorageMutation();
+
 	const onSubmit = async () => {
-		// const capacity =
-		// 	Number(storage?.capacity || 0) +
-		// 	Number(getValues("increaseValue")) -
-		// 	Number(getValues("decreaseValue"));
-		// if (mode === "create" && handleClose) {
-		// 	await postStorage({
-		// 		...getValues(),
-		// 		ownerId: localStorage.getItem("userId"),
-		// 		capacity,
-		// 		isCell,
-		// 		parentStorageId: parentStorageId,
-		// 	});
-		// 	handleClose();
-		// }
-		// if (mode === "save") {
-		// 	await putStorage(
-		// 		{
-		// 			...getValues(),
-		// 			ownerId: localStorage.getItem("userId"),
-		// 			capacity,
-		// 			isCell,
-		// 			parentStorageId: parentStorageId,
-		// 		},
-		// 		storage?.id as number
-		// 	);
-		// 	setReadOnly?.();
-		// 	onSaved?.();
-		// }
+		const capacity =
+			Number(storage?.capacity || 0) +
+			Number(getValues("increaseValue")) -
+			Number(getValues("decreaseValue"));
+		if (mode === "create" && handleClose) {
+			await triggerPost({
+				...getValues(),
+				capacity,
+			});
+			handleClose();
+		}
+		if (mode === "save") {
+			if (!storage?.id) return;
+
+			trigerUpdate({
+				id: storage.id,
+				body: {
+					...getValues(),
+					capacity,
+				},
+			});
+			setReadOnly?.();
+			onSaved?.();
+		}
 	};
 
 	return (

@@ -1,4 +1,4 @@
-import type { ObjectType } from "@entities/Objects/types/objects.type";
+import type { ObjectType } from "@entities/Objects/types/baseObjects.type";
 import type { StorageType } from "@entities/Storages/types/storages.type";
 import type { ReactNode } from "react";
 

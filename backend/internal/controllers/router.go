@@ -33,6 +33,11 @@ func InitRouter(h *handlers.Handlers, jwtManager jwt.TokenManager) *mux.Router {
 
 	admin.HandleFunc("/storages", h.GetAllStorages).Methods("GET")
 	admin.HandleFunc("/storages/{id}", h.GetStorageByID).Methods("GET")
+	admin.HandleFunc("/storages", h.CreateStorage).Methods("POST")
+	admin.HandleFunc("/storages/{id}", h.UpdateStorageByID).Methods("PATCH")
 
+	admin.HandleFunc("/items/tech", h.CreateTech).Methods("POST")
+	admin.HandleFunc("/items/tech", h.GetAllTech).Methods("GET")
+	
 	return router
 }

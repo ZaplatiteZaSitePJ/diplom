@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"database/sql"
+	"fmt"
 	"inno-accounting/internal/domain"
 	"inno-accounting/pkg/logger"
 	"inno-accounting/pkg/server_utils/app_errors"
@@ -162,4 +163,32 @@ func (userRepo *UserRepository) FindAll() ([]*domain.User, error) {
 
 func (userRepo *UserRepository) DeleteByID(id int) error {
 	return nil
+}
+
+// FindByEmail ищет пользователя по email
+func (userRepo *UserRepository) FindByEmail(email string) (*domain.User, error) {
+	if email == "" {
+		return nil, app_errors.InvalidInput("email parameter is required", nil)
+	}
+
+	findedUser := &domain.User{}
+
+	query := "SELECT id, username, email, role FROM users WHERE email = $1 AND deleted_at IS NULL"
+
+	err := userRepo.db.QueryRow(query, email).Scan(
+		&findedUser.ID,
+		&findedUser.Username,
+		&findedUser.Email,
+		&findedUser.Role,
+	)
+
+	if err != nil {
+		logger.Error("db", err)
+		if err == sql.ErrNoRows {
+			return nil, app_errors.NotFound(fmt.Sprintf("user with email '%s' not found", email), err)
+		}
+		return nil, app_errors.Internal("server unavailable now. Try again later", err)
+	}
+
+	return findedUser, nil
 }

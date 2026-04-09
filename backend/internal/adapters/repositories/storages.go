@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"database/sql"
+	"fmt"
 	"inno-accounting/internal/domain"
 	"inno-accounting/pkg/logger"
 	pg_err "inno-accounting/pkg/server_utils/db_errors/postgres"
@@ -64,6 +65,56 @@ func (storageRepo *StorageRepository) Save(newStorage *domain.Storage) (*domain.
 	}
 
 	return savedStorage, nil
+}
+
+// CHANGE STORAGE IN DATABASE
+func (storageRepo *StorageRepository) Change(id uuid.UUID, updatedStorage *domain.Storage) (*domain.Storage, error) {
+	query := `
+		UPDATE storages
+		SET storage_name = $1,
+			capacity = $2,
+			city = $3,
+			occupied_cells = $4,
+			items_amount = $5,
+			updated_at = $6
+		WHERE id = $7 AND deleted_at IS NULL
+		RETURNING id, storage_name, capacity, occupied_cells, city, items_amount, created_at, updated_at, deleted_at
+	`
+
+	storage := &domain.Storage{}
+
+	err := storageRepo.db.QueryRow(
+		query,
+		updatedStorage.StorageName,
+		updatedStorage.Capacity,
+		updatedStorage.City,
+		updatedStorage.OccupiedCells,
+		updatedStorage.ItemsAmount,
+		updatedStorage.UpdatedAt,
+		id,
+	).Scan(
+		&storage.ID,
+		&storage.StorageName,
+		&storage.Capacity,
+		&storage.OccupiedCells,
+		&storage.City,
+		&storage.ItemsAmount,
+		&storage.CreatedAt,
+		&storage.UpdatedAt,
+		&storage.DeletedAt,
+	)
+
+	if err != nil {
+		logger.Error("db", err)
+
+		if err == sql.ErrNoRows {
+			return nil, custom_errors.New(err, 404)
+		}
+
+		return nil, custom_errors.New(err, 500)
+	}
+
+	return storage, nil
 }
 
 // FIND USER BY ID IN DATABASE
@@ -171,4 +222,82 @@ func (storageRepo *StorageRepository) DeleteByID(id uuid.UUID) error {
 	}
 
 	return nil
+}
+
+// FindByName ищет склады, где имя содержит переданную строку (без учета регистра)
+func (storageRepo *StorageRepository) FindByName(name string) ([]*domain.Storage, error) {
+	storages := []*domain.Storage{}
+
+	query := `
+		SELECT id, storage_name, capacity, occupied_cells, city, items_amount, created_at, updated_at, deleted_at
+		FROM storages
+		WHERE deleted_at IS NULL AND storage_name ILIKE $1
+	`
+
+	rows, err := storageRepo.db.Query(query, "%"+name+"%")
+	if err != nil {
+		logger.Error("db", err)
+		return nil, custom_errors.New(err, 500)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		storage := &domain.Storage{}
+		err := rows.Scan(
+			&storage.ID,
+			&storage.StorageName,
+			&storage.Capacity,
+			&storage.OccupiedCells,
+			&storage.City,
+			&storage.ItemsAmount,
+			&storage.CreatedAt,
+			&storage.UpdatedAt,
+			&storage.DeletedAt,
+		)
+		if err != nil {
+			logger.Error("db", err)
+			return nil, custom_errors.New(err, 500)
+		}
+		storages = append(storages, storage)
+	}
+
+	if err := rows.Err(); err != nil {
+		logger.Error("db", err)
+		return nil, custom_errors.New(err, 500)
+	}
+
+	logger.Info(fmt.Sprintf("Found %d storages matching name '%s'", len(storages), name))
+	return storages, nil
+}
+
+func (storageRepo *StorageRepository) FindByExactName(name string) (*domain.Storage, error) {
+	storage := &domain.Storage{}
+
+	query := `
+		SELECT id, storage_name, capacity, occupied_cells, city, items_amount, created_at, updated_at, deleted_at
+		FROM storages
+		WHERE deleted_at IS NULL AND storage_name = $1
+		LIMIT 1
+	`
+
+	err := storageRepo.db.QueryRow(query, name).Scan(
+		&storage.ID,
+		&storage.StorageName,
+		&storage.Capacity,
+		&storage.OccupiedCells,
+		&storage.City,
+		&storage.ItemsAmount,
+		&storage.CreatedAt,
+		&storage.UpdatedAt,
+		&storage.DeletedAt,
+	)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil 
+		}
+		return nil, custom_errors.New(err, 500)
+	}
+
+	return storage, nil
 }

@@ -86,3 +86,20 @@ func (u *UserService) FindAllUsers() ([]*domain.User, error) {
 func (u *UserService) DeleteByID(userID int) error {
 	return nil
 }
+
+// FindUserByEmail ищет пользователя по email
+func (u *UserService) FindUserByEmail(email string) (*domain.User, error) {
+	logger.Info("Trying to find user by email: ", email)
+
+	if email == "" {
+		return nil, app_errors.InvalidInput("email parameter is required", nil)
+	}
+
+	user, err := u.repo.FindByEmail(email)
+	if err != nil {
+		return nil, err
+	}
+
+	logger.Info("User found by email: ", user.Email)
+	return user, nil
+}

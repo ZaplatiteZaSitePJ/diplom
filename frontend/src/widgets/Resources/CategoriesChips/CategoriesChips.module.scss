@@ -1,0 +1,20 @@
+.chips {
+	display: flex;
+	width: 100%;
+	gap: 16px;
+
+	&__button {
+		background-color: var(--dark-blue-color);
+		border-radius: 8px;
+		padding-inline: 16px;
+		padding-block: 8px;
+		font-weight: 100;
+		transition:
+			background-color 0.25s ease,
+			color 0.25s ease;
+	}
+
+	&__active {
+		background-color: var(--blue-color);
+	}
+}

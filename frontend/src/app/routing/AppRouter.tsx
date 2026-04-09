@@ -2,6 +2,7 @@ import Auth from "@pages/auth/Auth";
 // import Storages from "@pages/storages/ui/Storages";
 // import StorageUnit from "@pages/storageUnit/StorageUnit";
 import AuthLayout from "@pages/auth/AuthLayout";
+import Categories from "@pages/resources/Resources";
 import Storages from "@pages/storages/Storages";
 import StorageUnit from "@pages/storagesUnit/StorageUnit";
 import MainLayout from "@shared/layouts/MainLayout";
@@ -9,21 +10,22 @@ import MainLayout from "@shared/layouts/MainLayout";
 import {
 	createBrowserRouter,
 	createRoutesFromElements,
+	Navigate,
 	// Navigate,
 	Outlet,
 	// redirect,
 	Route,
 } from "react-router-dom";
 
-// const ProtectedLayout = () => {
-// 	const token = localStorage.getItem("accessToken");
+const ProtectedLayout = () => {
+	const token = localStorage.getItem("access");
 
-// 	if (!token) {
-// 		return <Navigate to="/auth" replace />;
-// 	}
+	if (!token) {
+		return <Navigate to="/auth" replace />;
+	}
 
-// 	return <Outlet />;
-// };
+	return <Outlet />;
+};
 
 // const UnauthOnly = ({ children }: { children: JSX.Element }) => {
 // 	const token = localStorage.getItem("accessToken");
@@ -51,13 +53,17 @@ const router = createBrowserRouter(
 					<Route path="/storages/:id" element={<StorageUnit />} />
 				</Route>
 			</Route> */}
-			<Route path="/" element={<MainLayout />}>
-				<Route path="/storages/">
-					<Route index element={<Storages />} />
-					<Route
-						path="/storages/:id"
-						element={<StorageUnit />}
-					></Route>
+			<Route element={<ProtectedLayout />}>
+				<Route path="/" element={<MainLayout />}>
+					<Route index element={<Categories />} />
+
+					<Route path="/storages/">
+						<Route index element={<Storages />} />
+						<Route
+							path="/storages/:id"
+							element={<StorageUnit />}
+						></Route>
+					</Route>
 				</Route>
 			</Route>
 

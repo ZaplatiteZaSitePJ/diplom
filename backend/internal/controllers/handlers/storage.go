@@ -115,3 +115,60 @@ func (h *Handlers) DeleteStorageByID(w http.ResponseWriter, r *http.Request) {
 
 	response_message.WrapperResponseJSON(w, 200, "storage deleted successfully")
 }
+
+
+func (h *Handlers) UpdateStorageByID(w http.ResponseWriter, r *http.Request) {
+	configure_headers.DefaultHeader(w)
+
+	idStr := mux.Vars(r)["id"]
+	storageUUID, err := uuid.Parse(idStr)
+	if err != nil {
+		errStr := "invalid storage ID"
+		idErr := app_errors.InvalidInput(errStr, errors.New(errStr))
+		response_message.WrapperResponseJSON(w, app_errors.HTTPStatusFromCode(idErr.Code), idErr.Message)
+		return
+	}
+
+	var input dto.CreateStorage
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		errStr := "invalid input data"
+		jsonErr := app_errors.InvalidInput(errStr, err)
+		response_message.WrapperResponseJSON(w, app_errors.HTTPStatusFromCode(jsonErr.Code), jsonErr.Message)
+		return
+	}
+
+	updatedStorage, err := h.Storage.ChangeStorageByID(storageUUID, &input)
+	if err != nil {
+		var appErr *app_errors.AppError
+		if errors.As(err, &appErr) {
+			response_message.WrapperResponseJSON(w, app_errors.HTTPStatusFromCode(appErr.Code), appErr.Message)
+		} else {
+			custom_errors.ErrorResponse(w, err, logger.GetLoger())
+		}
+		return
+	}
+
+	logger.Info(fmt.Sprintf("Storage updated successfully: %+v", updatedStorage))
+	response_message.WrapperResponseJSON(w, 200, updatedStorage)
+}
+
+// GetStoragesByName handles HTTP request for retrieving storages by name.
+// Returns a list of storages matching the given name.
+func (h *Handlers) GetStorageByExactName(w http.ResponseWriter, r *http.Request) {
+	configure_headers.DefaultHeader(w)
+
+	name := r.URL.Query().Get("name")
+	if name == "" {
+		err := app_errors.InvalidInput("name query parameter is required", errors.New("missing name"))
+		response_message.WrapperResponseJSON(w, app_errors.HTTPStatusFromCode(err.Code), err.Message)
+		return
+	}
+
+	storage, err := h.Storage.FindStorageByExactName(name)
+	if err != nil {
+		custom_errors.ErrorResponse(w, err, logger.GetLoger())
+		return
+	}
+
+	response_message.WrapperResponseJSON(w, 200, storage)
+}

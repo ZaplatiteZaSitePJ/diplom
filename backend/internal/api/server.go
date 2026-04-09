@@ -8,6 +8,7 @@ import (
 	"inno-accounting/internal/controllers"
 	"inno-accounting/internal/controllers/handlers"
 	"inno-accounting/internal/use-cases/auth"
+	"inno-accounting/internal/use-cases/item/tech"
 	storages "inno-accounting/internal/use-cases/storage"
 	"inno-accounting/internal/use-cases/user"
 	jwt_config "inno-accounting/pkg/jwt"
@@ -65,13 +66,16 @@ func (a *API) Start() error {
 	storageRepo := repositories.NewStorageRepository(storage.GetDB())
 	storageService := storages.New(storageRepo)
 
+	techRepo := repositories.NewTechRepository(storage.GetDB())
+	techService := tech.New(techRepo, storageService, userService) 
+
 	// ROUTER INIT
-	handlers := handlers.New(userService, authService, storageService)
+	handlers := handlers.New(userService, authService, storageService, techService)
 	router := controllers.InitRouter(handlers, jwtManager)
 	
 	handler := cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:5173"},
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
 		AllowedHeaders:   []string{"Authorization", "Content-Type"},
 		AllowCredentials: true,
 	}).Handler(router)
