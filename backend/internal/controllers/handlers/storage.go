@@ -98,16 +98,19 @@ func (h *Handlers) DeleteStorageByID(w http.ResponseWriter, r *http.Request) {
 
 	idStr := mux.Vars(r)["id"]
 	storageUUID, err := uuid.Parse(idStr)
-
 	if err != nil {
-		wError := custom_errors.New(err, 400)
-		wError.AddLogData(fmt.Sprintf("Invalid storage ID: %v", idStr))
-		wError.AddResponseData("Invalid storage ID")
-		custom_errors.ErrorResponse(w, wError, logger.GetLoger())
+		custom_errors.ErrorResponse(w, custom_errors.New(err, 400), logger.GetLoger())
 		return
 	}
 
-	err = h.Storage.DeleteStorageByID(storageUUID)
+	newStorageName := r.URL.Query().Get("newStorageName")
+
+	var namePtr *string
+	if newStorageName != "" {
+		namePtr = &newStorageName
+	}
+
+	err = h.Storage.DeleteStorageByID(storageUUID, namePtr)
 	if err != nil {
 		custom_errors.ErrorResponse(w, err, logger.GetLoger())
 		return

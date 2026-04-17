@@ -1,35 +1,44 @@
-import styles from "./FormSearch.module.scss";
 import { useForm } from "react-hook-form";
-import { Input } from "@shared/ui/ui-kit";
-import { useState, useEffect } from "react";
+import { useState, type FC } from "react";
+import styles from "./FormSearch.module.scss";
+
+import type {
+	SoftwareFilter,
+	SoftwareItemPublic,
+} from "@entities/Objects/types/software.type";
 import cn from "classnames";
-import ObjectList from "../ObjectList/ObjectList";
-import type { SoftwareItem } from "@entities/Objects/types/software.type";
 
-const SoftwareSearch = () => {
-	const { register, watch } = useForm<Partial<SoftwareItem>>();
+import { Input } from "@shared/ui/ui-kit";
+import ObjectList from "../ObjectList/SoftwareList";
 
-	const [isWrapped, setWrapped] = useState<boolean>(false);
-	const [request, setRequest] = useState<object[]>([]);
+type Props = {
+	callPlace?: "worker" | "storage";
+	name?: string;
+};
+
+const SoftwareSearch: FC<Props> = ({ callPlace, name }) => {
+	const { register, watch } = useForm<Partial<SoftwareItemPublic>>();
+	const [isWrapped, setWrapped] = useState(false);
 
 	const handleWrap = () => {
 		setWrapped((prev) => !prev);
 	};
 
-	const formValues = watch();
+	const raw = watch();
 
-	// useEffect(() => {
-	// 	const fetchParsed = async () => {
-	// 		try {
-	// 			const parsed = await parseFormSearch(formValues);
-	// 			setRequest(parsed);
-	// 		} catch (error) {
-	// 			console.error("parseFormSearch error:", error);
-	// 		}
-	// 	};
+	const filter: SoftwareFilter = {
+		id: raw.id ?? undefined,
+		category: raw.category ?? undefined,
+		vendor: raw.vendor ?? undefined,
+		license_key: raw.license_key ?? undefined,
+		title: raw.title ?? undefined,
+		purchase_price: raw.purchase_price ?? undefined,
 
-	// 	fetchParsed();
-	// }, [JSON.stringify(formValues)]);
+		last_worker_email:
+			callPlace === "worker"
+				? name
+				: (raw.last_worker_email ?? undefined),
+	};
 
 	return (
 		<div className={styles.objectFormSearch}>
@@ -37,7 +46,11 @@ const SoftwareSearch = () => {
 				className={styles.objectFormSearch__filter}
 				style={
 					isWrapped
-						? { height: "600px", overflow: "auto" }
+						? {
+								height: "368px",
+								overflow: "auto",
+								boxShadow: "0 12px 30px rgba(0, 0, 0, 0.75)",
+							}
 						: { height: "138px", overflow: "hidden" }
 				}
 			>
@@ -53,7 +66,7 @@ const SoftwareSearch = () => {
 						width="240px"
 					/>
 					<Input
-						label="Название ПО"
+						label="Продукт"
 						register={register("title")}
 						width="240px"
 						type="string"
@@ -67,24 +80,28 @@ const SoftwareSearch = () => {
 					}
 				>
 					<Input
-						label="Ключ лицензии"
-						register={register("license_key")}
+						label="Категория"
+						register={register("category")}
 						width="240px"
 						type="string"
 					/>
 
 					<Input
-						label="Дата активации"
-						register={register("started_at")}
+						label="Последний владелец"
+						register={register("last_worker")}
 						width="240px"
-						type="date"
+						type="string"
+						value={callPlace == "worker" ? name : undefined}
+						isAvailable={callPlace == "worker" ? false : true}
 					/>
 
 					<Input
-						label="Дата истечения"
-						register={register("expired_at")}
+						label="Цена"
+						register={register("purchase_price")}
 						width="240px"
-						type="date"
+						type="number"
+						value={callPlace == "worker" ? name : undefined}
+						isAvailable={callPlace == "worker" ? false : true}
 					/>
 				</div>
 
@@ -109,7 +126,7 @@ const SoftwareSearch = () => {
 			</button>
 
 			<div className={styles.objectFormSearch__objectListPlace}>
-				{<ObjectList />}
+				<ObjectList filter={filter} />
 			</div>
 		</div>
 	);

@@ -12,5 +12,7 @@ type StorageRepository interface {
 	FindByID(id uuid.UUID) (*domain.Storage, error)
 	FindByExactName(string) (*domain.Storage, error)
 	FindAll() ([]*domain.Storage, error)
-	DeleteByID(id uuid.UUID) error
+	GetStorageStats(storageID uuid.UUID) (int, int, error)
+	TransferAndDelete(oldStorageID, newStorageID uuid.UUID) error
+	DeleteWithItems(storageID uuid.UUID) error
 }

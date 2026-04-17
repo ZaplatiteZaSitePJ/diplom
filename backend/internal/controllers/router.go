@@ -35,9 +35,26 @@ func InitRouter(h *handlers.Handlers, jwtManager jwt.TokenManager) *mux.Router {
 	admin.HandleFunc("/storages/{id}", h.GetStorageByID).Methods("GET")
 	admin.HandleFunc("/storages", h.CreateStorage).Methods("POST")
 	admin.HandleFunc("/storages/{id}", h.UpdateStorageByID).Methods("PATCH")
+	admin.HandleFunc("/storages/{id}", h.DeleteStorageByID).Methods("DELETE")
+
+	admin.HandleFunc("/categories/{type_index}", h.GetCategoriesByTypeID).Methods("GET")
+	admin.HandleFunc("/items/{id}", h.DeleteTechByID).Methods("DELETE")
+
 
 	admin.HandleFunc("/items/tech", h.CreateTech).Methods("POST")
 	admin.HandleFunc("/items/tech", h.GetAllTech).Methods("GET")
+	admin.HandleFunc("/items/tech/{id}", h.GetTechByID).Methods("GET")
+	admin.HandleFunc("/items/tech/{id}", h.PatchTechByID).Methods("PATCH")
+
+	admin.HandleFunc("/items/docs", h.CreateDocument).Methods("POST")
+	admin.HandleFunc("/items/docs", h.GetAllDocuments).Methods("GET")
+	admin.HandleFunc("/items/docs/{id}", h.GetDocumentByID).Methods("GET")
+	admin.HandleFunc("/items/docs/{id}", h.PatchDocumentByID).Methods("PATCH")
+
+	admin.HandleFunc("/items/software", h.CreateSoftware).Methods("POST")
+	admin.HandleFunc("/items/software", h.GetAllSoftware).Methods("GET")
+	admin.HandleFunc("/items/software/{id}", h.GetSoftwareByID).Methods("GET")
+	admin.HandleFunc("/items/software/{id}", h.PatchSoftwareByID).Methods("PATCH")
 	
 	return router
 }

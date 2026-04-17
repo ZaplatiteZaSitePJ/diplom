@@ -301,3 +301,106 @@ func (storageRepo *StorageRepository) FindByExactName(name string) (*domain.Stor
 
 	return storage, nil
 }
+
+func (r *StorageRepository) GetStorageStats(storageID uuid.UUID) (int, int, error) {
+	query := `
+		SELECT 
+			COUNT(*) AS items_amount,
+			COALESCE(SUM(occupied_cells), 0) AS occupied_cells
+		FROM items
+		WHERE last_storage_id = $1
+		  AND transfer_status = 'storage'
+	`
+
+	var itemsAmount int
+	var occupiedCells int
+
+	err := r.db.QueryRow(query, storageID).Scan(&itemsAmount, &occupiedCells)
+	if err != nil {
+		logger.Error("db", err)
+		return 0, 0, custom_errors.New(err, 500)
+	}
+
+	return itemsAmount, occupiedCells, nil
+}
+
+func (r *StorageRepository) TransferAndDelete(oldStorageID, newStorageID uuid.UUID) error {
+	tx, err := r.db.Begin()
+	if err != nil {
+		return custom_errors.New(err, 500)
+	}
+
+	defer tx.Rollback()
+
+	// 1. обновляем items
+	updateQuery := `
+		UPDATE items
+		SET last_storage_id = $1,
+		    transfer_status = 'transfering_to_storage'
+		WHERE last_storage_id = $2
+		  AND transfer_status = 'storage'
+	`
+
+	_, err = tx.Exec(updateQuery, newStorageID, oldStorageID)
+	if err != nil {
+		return custom_errors.New(err, 500)
+	}
+
+	// 2. soft delete склада
+	deleteQuery := `
+		UPDATE storages
+		SET deleted_at = NOW()
+		WHERE id = $1 AND deleted_at IS NULL
+	`
+
+	result, err := tx.Exec(deleteQuery, oldStorageID)
+	if err != nil {
+		return custom_errors.New(err, 500)
+	}
+
+	rows, _ := result.RowsAffected()
+	if rows == 0 {
+		return custom_errors.New(sql.ErrNoRows, 404)
+	}
+
+	return tx.Commit()
+}
+
+func (r *StorageRepository) DeleteWithItems(storageID uuid.UUID) error {
+	tx, err := r.db.Begin()
+	if err != nil {
+		return custom_errors.New(err, 500)
+	}
+
+	defer tx.Rollback()
+
+	// 1. удалить items
+	deleteItemsQuery := `
+		DELETE FROM items
+		WHERE last_storage_id = $1
+	`
+
+	_, err = tx.Exec(deleteItemsQuery, storageID)
+	if err != nil {
+		return custom_errors.New(err, 500)
+	}
+
+	// 2. удалить склад (soft delete)
+	deleteStorageQuery := `
+		UPDATE storages
+		SET deleted_at = NOW()
+		WHERE id = $1 AND deleted_at IS NULL
+	`
+
+	result, err := tx.Exec(deleteStorageQuery, storageID)
+	if err != nil {
+		return custom_errors.New(err, 500)
+	}
+
+	rows, _ := result.RowsAffected()
+	if rows == 0 {
+		return custom_errors.New(sql.ErrNoRows, 404)
+	}
+
+	return tx.Commit()
+}

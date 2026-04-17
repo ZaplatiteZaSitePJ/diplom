@@ -4,8 +4,16 @@ export type DocsItem = BaseObjectType & {
 	responsible_worker: string;
 	full_signed_at: string;
 	responsible_worker_email: string;
-	needed_signs: boolean;
-	received_signs: boolean;
+	needed_signs: number;
+	received_signs: number;
 	doc_number: string;
-	doc_type: string;
 };
+
+export interface DocsFilter {
+	id?: string;
+	doc_number?: string;
+	last_worker_email?: string;
+	last_storage?: string;
+	category?: string;
+	transfer_status?: string;
+}

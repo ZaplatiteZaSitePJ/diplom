@@ -1,34 +1,74 @@
-import type { CategoriesList } from "@entities/Objects/types/baseObjects.type";
+import type {
+	CategoriesList,
+	TransferStatus,
+} from "@entities/Objects/types/baseObjects.type";
 import TechSearch from "./TechSearch";
 import DocsSearch from "./DocsSearch";
 import SoftwareSearch from "./SoftwareSearch";
-import ConsumablesSearch from "./ConsumablesSearch";
-import MerchSearch from "./MerchSearch";
+import type { FC } from "react";
+import { useState } from "react";
+import CategoriesChips from "@widgets/Resources/CategoriesChips/CategoriesChips";
+import TechForm from "../ObjectsForm/ObjectForm/TechForm";
+import DocsForm from "../ObjectsForm/ObjectForm/DocsForm";
+import SoftwareForm from "../ObjectsForm/ObjectForm/SoftwareForm";
 
-const ResourcesSearch = ({
-	currentCategorie,
-}: {
-	currentCategorie: CategoriesList;
-}) => {
-	switch (currentCategorie) {
-		case "Техника":
-			return <TechSearch />;
-
-		case "Документы":
-			return <DocsSearch />;
-
-		case "Программное обеспечение":
-			return <SoftwareSearch />;
-
-		case "Расходные ресурсы":
-			return <ConsumablesSearch />;
-
-		case "Брендовые вещи":
-			return <MerchSearch />;
-
-		default:
-			return null;
-	}
+type ResourcesSearchProps = {
+	callPlace?: Extract<TransferStatus, "worker" | "storage">;
+	mode?: "search" | "create";
+	name?: string;
 };
 
-export default ResourcesSearch;
+const ResourcesPanel: FC<ResourcesSearchProps> = ({
+	callPlace,
+	name,
+	mode = "search",
+}) => {
+	const [currentCategorie, setCurrentCategorie] =
+		useState<CategoriesList>("Техника");
+
+	const renderSearch = () => {
+		switch (currentCategorie) {
+			case "Техника":
+				return <TechSearch callPlace={callPlace} name={name} />;
+
+			case "Документы":
+				return <DocsSearch />;
+
+			case "Программное обеспечение":
+				return <SoftwareSearch />;
+
+			default:
+				return null;
+		}
+	};
+
+	const renderCreate = () => {
+		switch (currentCategorie) {
+			case "Техника":
+				return <TechForm mode="create" />;
+
+			case "Документы":
+				return <DocsForm mode="create" />;
+
+			case "Программное обеспечение":
+				return <SoftwareForm mode="create" />;
+
+			default:
+				return null;
+		}
+	};
+
+	return (
+		<>
+			<CategoriesChips
+				currentCategorie={currentCategorie}
+				setCurrentCategorie={setCurrentCategorie}
+			/>
+
+			{mode == "search" && renderSearch()}
+			{mode == "create" && renderCreate()}
+		</>
+	);
+};
+
+export default ResourcesPanel;

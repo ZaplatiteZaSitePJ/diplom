@@ -10,7 +10,7 @@ export default function Navigation() {
 
 			<nav className={styles.navigation}>
 				<NavLink
-					to={"/"}
+					to={"/items"}
 					className={({ isActive }) =>
 						cn(styles.navigation__pages, {
 							[styles.navigation__active]: isActive,

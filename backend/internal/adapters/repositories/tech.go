@@ -203,33 +203,34 @@ func (r *TechRepository) FindByID(id uuid.UUID) (*domain.Tech, error) {
 	return item, nil
 }
 
-func (r *TechRepository) FindAll(filter *dto.TechFilter) ([]*domain.Tech, error) {
+func (r *TechRepository) FindAll(filter *dto.TechFilter) ([]*dto.TechItemPublic, error) {
 	baseQuery := `
 		SELECT 
 			i.id,
-			i.universal_name,
 			i.type_id,
-			i.category_id,
-			i.last_storage_id,
-			i.last_worker_id,
+			c.name AS category,
+			s.storage_name AS last_storage,
+			u.email AS last_worker_email,
 			i.transfer_status,
 			i.quality_status,
 			i.purchase_price,
 			i.occupied_cells,
-			t.item_id,
 			t.brand,
 			t.model,
 			t.warranty_started_at,
-			t.warranty_end_at
+			t.warranty_end_at,
+			i.universal_name
 		FROM items i
 		JOIN tech t ON t.item_id = i.id
+		LEFT JOIN storages s ON s.id = i.last_storage_id
+		LEFT JOIN users u ON u.id = i.last_worker_id
+		LEFT JOIN categories c ON c.id = i.category_id
 		WHERE i.type_id = 0
 	`
 
 	args := []interface{}{}
 	conditions := []string{}
 
-	// --- динамическая фильтрация
 	if filter != nil {
 		argPos := 1
 
@@ -252,22 +253,19 @@ func (r *TechRepository) FindAll(filter *dto.TechFilter) ([]*domain.Tech, error)
 		}
 
 		if filter.LastWorker != nil {
-			conditions = append(conditions, fmt.Sprintf(
-				"i.last_worker_id = (SELECT id FROM users WHERE email = $%d)", argPos))
+			conditions = append(conditions, fmt.Sprintf("u.email = $%d", argPos))
 			args = append(args, *filter.LastWorker)
 			argPos++
 		}
 
 		if filter.LastStorage != nil {
-			conditions = append(conditions, fmt.Sprintf(
-				"i.last_storage_id = (SELECT id FROM storages WHERE storage_name = $%d)", argPos))
+			conditions = append(conditions, fmt.Sprintf("s.storage_name = $%d", argPos))
 			args = append(args, *filter.LastStorage)
 			argPos++
 		}
 
 		if filter.Category != nil {
-			conditions = append(conditions, fmt.Sprintf(
-				"i.category_id = (SELECT id FROM categories WHERE name = $%d)", argPos))
+			conditions = append(conditions, fmt.Sprintf("c.name = $%d", argPos))
 			args = append(args, *filter.Category)
 			argPos++
 		}
@@ -277,9 +275,14 @@ func (r *TechRepository) FindAll(filter *dto.TechFilter) ([]*domain.Tech, error)
 			args = append(args, *filter.QualityStatus)
 			argPos++
 		}
+
+		if filter.TransferStatus != nil {
+			conditions = append(conditions, fmt.Sprintf("i.transfer_status = $%d", argPos))
+			args = append(args, *filter.TransferStatus)
+			argPos++
+		}
 	}
 
-	// --- добавляем условия к SQL
 	if len(conditions) > 0 {
 		baseQuery += " AND " + strings.Join(conditions, " AND ")
 	}
@@ -291,26 +294,26 @@ func (r *TechRepository) FindAll(filter *dto.TechFilter) ([]*domain.Tech, error)
 	}
 	defer rows.Close()
 
-	var items []*domain.Tech
+	var items []*dto.TechItemPublic
 
 	for rows.Next() {
-		item := &domain.Tech{}
+		item := &dto.TechItemPublic{}
+
 		err := rows.Scan(
 			&item.ID,
-			&item.UniversalName,
-			&item.TypeID,
-			&item.CategoryID,
-			&item.LastStorageID,
-			&item.LastWorkerID,
+			&item.Type_ID,
+			&item.Category,
+			&item.LastStorage,
+			&item.LastWorkerEmail,
 			&item.TransferStatus,
 			&item.QualityStatus,
 			&item.PurchasePrice,
 			&item.OccupiedCells,
-			&item.ItemID,
 			&item.Brand,
 			&item.Model,
 			&item.WarrantyStartedAt,
 			&item.WarrantyEndAt,
+			&item.UniversalName,
 		)
 		if err != nil {
 			logger.Error("row scan error:", err)
@@ -329,21 +332,14 @@ func (r *TechRepository) FindAll(filter *dto.TechFilter) ([]*domain.Tech, error)
 }
 
 func (r *TechRepository) DeleteByID(id uuid.UUID) error {
-	queryTech := `DELETE FROM tech WHERE item_id = $1`
-	queryItem := `DELETE FROM items WHERE id = $1`
+	query := `DELETE FROM items WHERE id = $1`
 
 	tx, err := r.db.Begin()
 	if err != nil {
 		return custom_errors.New(err, 500)
 	}
 
-	_, err = tx.Exec(queryTech, id)
-	if err != nil {
-		tx.Rollback()
-		return custom_errors.New(err, 500)
-	}
-
-	result, err := tx.Exec(queryItem, id)
+	result, err := tx.Exec(query, id)
 	if err != nil {
 		tx.Rollback()
 		return custom_errors.New(err, 500)
@@ -371,4 +367,49 @@ func (r *TechRepository) FindCategoryIDByName(name string) (int, error) {
 
 	return id, nil
 
+}
+
+func (r *TechRepository) FindCategoryNameByID(id int) (*string, error) {
+	query := `SELECT name FROM categories WHERE id = $1`
+
+	var name string
+
+	err := r.db.QueryRow(query, id).Scan(&name)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, custom_errors.New(err, 404)
+		}
+		return nil, custom_errors.New(err, 500)
+	}
+
+	return &name, nil
+}
+
+func (r *TechRepository) GetCategoriesByTypeID(typeID int) ([]string, error) {
+	query := `SELECT name 
+			FROM categories 
+			WHERE type_id = $1 
+			ORDER BY name`
+
+	rows, err := r.db.Query(query, typeID)
+	if err != nil {
+		return nil, custom_errors.New(err, 500)
+	}
+	defer rows.Close()
+
+	var categories []string
+
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			return nil, custom_errors.New(err, 500)
+		}
+		categories = append(categories, name)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, custom_errors.New(err, 500)
+	}
+
+	return categories, nil
 }

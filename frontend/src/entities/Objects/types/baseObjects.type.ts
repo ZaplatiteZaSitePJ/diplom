@@ -20,9 +20,10 @@ export type TransferStatusRuLabel =
 	| "В пути на склад";
 
 export const TransferStatusList: {
-	label: TransferStatusRuLabel;
-	value: TransferStatus;
+	label: TransferStatusRuLabel | "Сбросить";
+	value: TransferStatus | undefined;
 }[] = [
+	{ label: "Сбросить", value: undefined },
 	{ label: "У работника", value: TRANSFER_STATUS.WORKER },
 	{ label: "На складе", value: TRANSFER_STATUS.STORAGE },
 	{
@@ -52,9 +53,10 @@ export type QualityStatusRuLabel =
 	| "Неисправен";
 
 export const QualityStatusList: {
-	label: QualityStatusRuLabel;
-	value: QualityStatus;
+	label: QualityStatusRuLabel | "Сбросить";
+	value: QualityStatus | undefined;
 }[] = [
+	{ label: "Сбросить", value: undefined },
 	{ label: "Новый", value: QUALITY_STATUS.NEW },
 	{ label: "Пользованный", value: QUALITY_STATUS.USED },
 	{ label: "Повреждён", value: QUALITY_STATUS.DAMAGED },
@@ -81,7 +83,15 @@ export type BaseObjectType = {
 };
 
 export const getTransferLabel = (value: TransferStatus) =>
-	TransferStatusList.find((item) => item.value === value)?.label;
+	TransferStatusList.find((item) => item.value === value)?.label ?? "Все";
 
 export const getQualityLabel = (value: QualityStatus) =>
-	QualityStatusList.find((item) => item.value === value)?.label;
+	QualityStatusList.find((item) => item.value === value)?.label ?? undefined;
+
+export const makeLightID = (value: string) => {
+	if (!value) return "";
+
+	if (value.length <= 6) return value;
+
+	return `${value.slice(0, 3)}...${value.slice(-3)}`;
+};

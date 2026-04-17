@@ -7,6 +7,8 @@ import (
 )
 
 type TechItemPublic struct {
+	ID				  uuid.UUID `json:"id"`
+	UniversalName     string  `json:"universal_name"`
 	Type_ID           int `json:"type_id"`
 	Category          *string    `json:"category"`
 	LastStorage       *string    `json:"last_storage"`
@@ -30,6 +32,7 @@ type TechFilter struct {
 	LastStorage   *string `json:"last_storage"`
 	Category      *string `json:"category"`
 	QualityStatus *string `json:"quality_status"`
+	TransferStatus *string `json:"transfer_status"`
 }
 
 type SoftwareItemPublic struct {
@@ -37,16 +40,26 @@ type SoftwareItemPublic struct {
 	UniversalName     string    `json:"universal_name"`
 	Type              string    `json:"type"`
 	Category          string    `json:"category"`
-	LastWorker        string    `json:"last_worker"`
-	TransferStatus    string    `json:"transfer_status"`
+	LastWorkerEmail        *string    `json:"last_worker_email"`
+	TransferStatus    *string    `json:"transfer_status"`
 	PurchasePrice     float64   `json:"purchase_price"`
 
 	Vendor            string     `json:"vendor"`
 	LicenseKey        string     `json:"license_key"`
 	Title             string     `json:"title"`
-	StartedAt         time.Time  `json:"started_at"`
-	ExpiredAt         time.Time  `json:"expired_at"`
-	UpdatedAt         time.Time  `json:"updated_at"`
+	StartedAt         *time.Time  `json:"started_at"`
+	ExpiredAt         *time.Time  `json:"expired_at"`
+	UpdatedAt         *time.Time  `json:"updated_at"`
+}
+
+type SoftwareFilter struct {
+	ID            *string `json:"id"`
+	Category      *string `json:"category"`
+	LastWorkerEmail    *string `json:"last_worker_email"`
+	Vendor        *string     `json:"vendor"`
+	LicenseKey    *string     `json:"license_key"`
+	Title         *string     `json:"title"`
+	PurchasePrice     *float64   `json:"purchase_price"`
 }
 
 type MerchItemPublic struct {
@@ -68,20 +81,27 @@ type MerchItemPublic struct {
 }
 
 type DocsItemPublic struct {
-	ID                uuid.UUID `json:"id"`
-	UniversalName     string    `json:"universal_name"`
-	Type              string    `json:"type"`
-	Category          string    `json:"category"`
-	LastStorage       string    `json:"last_storage"`
-	LastWorker        string    `json:"last_worker"`
-	TransferStatus    string    `json:"transfer_status"`
+	ID                    uuid.UUID `json:"id"`
+	UniversalName         string    `json:"universal_name"`
+	Type                  string    `json:"type"`
+	Category              string    `json:"category"`
+	LastStorage           *string    `json:"last_storage"`
+	LastWorkerEmail            *string    `json:"last_worker_email"`
+	TransferStatus        *string    `json:"transfer_status"`
 
-	ResponsibleWorker        string  `json:"responsible_worker"`
-	FullSignedAt             time.Time  `json:"full_signed_at"`
-	ResponsibleWorkerEmail   string    `json:"responsible_worker_email"`
-	NeededSigns              bool       `json:"needed_signs"`
-	ReceivedSigns            bool       `json:"received_signs"`
-	DocNumber                string     `json:"doc_number"`
-	DocType                  string     `json:"doc_type"`
+	FullSignedAt           *time.Time `json:"full_signed_at"`
+	ResponsibleWorkerEmail string    `json:"responsible_worker_email"`
+	NeededSigns            int      `json:"needed_signs"`
+	ReceivedSigns          int      `json:"received_signs"`
+	DocNumber              string    `json:"doc_number"`
+}
+
+type DocsFilter struct {
+	ID             *uuid.UUID `json:"id,omitempty"`
+	DocNumber      *string    `json:"doc_number,omitempty"`
+	LastWorkerEmail     *string    `json:"last_worker_email,omitempty"`
+	LastStorage    *string    `json:"last_storage,omitempty"`
+	Category       *string    `json:"category,omitempty"`
+	TransferStatus *string    `json:"transfer_status,omitempty"`
 }
 

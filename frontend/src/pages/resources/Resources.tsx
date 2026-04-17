@@ -1,13 +1,7 @@
-import CategoriesChips from "@widgets/Resources/CategoriesChips/CategoriesChips";
 import styles from "./Resources.module.scss";
-import { useState } from "react";
-import type { CategoriesList } from "@entities/Objects/types/baseObjects.type";
 import ResourcesSearch from "@widgets/Resources/ResourcesSearch/ResourcesSearch";
 
-export default function Categories() {
-	const [currentCategorie, setCurrentCategorie] =
-		useState<CategoriesList>("Техника");
-
+const Resources = () => {
 	return (
 		<main className={styles.main}>
 			<div className={styles.main__topContainer}>
@@ -15,12 +9,10 @@ export default function Categories() {
 			</div>
 
 			<div className={styles.main__mainContainer}>
-				<CategoriesChips
-					currentCategorie={currentCategorie}
-					setCurrentCategorie={setCurrentCategorie}
-				/>
-				<ResourcesSearch currentCategorie={currentCategorie} />
+				<ResourcesSearch />
 			</div>
 		</main>
 	);
-}
+};
+
+export default Resources;

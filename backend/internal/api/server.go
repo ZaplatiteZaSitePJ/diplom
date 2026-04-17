@@ -8,6 +8,8 @@ import (
 	"inno-accounting/internal/controllers"
 	"inno-accounting/internal/controllers/handlers"
 	"inno-accounting/internal/use-cases/auth"
+	"inno-accounting/internal/use-cases/item/document"
+	"inno-accounting/internal/use-cases/item/software"
 	"inno-accounting/internal/use-cases/item/tech"
 	storages "inno-accounting/internal/use-cases/storage"
 	"inno-accounting/internal/use-cases/user"
@@ -69,8 +71,14 @@ func (a *API) Start() error {
 	techRepo := repositories.NewTechRepository(storage.GetDB())
 	techService := tech.New(techRepo, storageService, userService) 
 
+	docsRepo := repositories.NewDocumentRepository(storage.GetDB())
+	docsService := document.New(docsRepo, storageService, userService)
+
+	softwareRepo := repositories.NewSoftwareRepository(storage.GetDB())
+	softwareService := software.New(softwareRepo, userService)
+
 	// ROUTER INIT
-	handlers := handlers.New(userService, authService, storageService, techService)
+	handlers := handlers.New(userService, authService, storageService, techService, docsService, softwareService)
 	router := controllers.InitRouter(handlers, jwtManager)
 	
 	handler := cors.New(cors.Options{

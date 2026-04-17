@@ -18,6 +18,7 @@ const baseQueryWithAuthRedirect = async (args, api, extraOptions) => {
 
 	if (result.error) {
 		if (result.error.status === 401) {
+			localStorage.removeItem("access");
 			window.location.href = "/auth";
 		}
 	}
@@ -29,6 +30,6 @@ export const baseApi = createApi({
 	reducerPath: "api",
 	baseQuery: baseQueryWithAuthRedirect,
 	refetchOnMountOrArgChange: true,
-	tagTypes: ["Storage", "User", "Tech"],
+	tagTypes: ["Storage", "User", "Tech", "Docs", "Software"],
 	endpoints: () => ({}),
 });

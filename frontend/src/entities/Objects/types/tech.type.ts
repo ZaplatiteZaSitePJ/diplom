@@ -6,3 +6,14 @@ export type TechItem = BaseObjectType & {
 	warranty_started_at: string;
 	warranty_end_at: string;
 };
+
+export interface TechFilter {
+	id?: string;
+	brand?: string;
+	model?: string;
+	last_worker?: string;
+	last_storage?: string;
+	category?: string;
+	quality_status?: string;
+	transfer_status?: string;
+}

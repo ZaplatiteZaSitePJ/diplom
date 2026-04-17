@@ -1,35 +1,45 @@
 import styles from "./FormSearch.module.scss";
 import { useForm } from "react-hook-form";
 import { Input } from "@shared/ui/ui-kit";
-import { useState, useEffect } from "react";
+import { useState, type FC } from "react";
 import cn from "classnames";
-import ObjectList from "../ObjectList/ObjectList";
-import type { DocsItem } from "@entities/Objects/types/docs.type";
+import ObjectList from "../ObjectList/DocsList";
+import type { TransferStatus } from "@entities/Objects/types/baseObjects.type";
+import TransferSelect from "@features/formElements/ui/TransferSelect";
+import type { DocsFilter, DocsItem } from "@entities/Objects/types/docs.type";
 
-const DocsSearch = () => {
+type ResourcesProps = {
+	callPlace?: Extract<TransferStatus, "worker" | "storage">;
+	name?: string;
+};
+
+const DocsSearch: FC<ResourcesProps> = ({ callPlace, name }) => {
 	const { register, watch } = useForm<Partial<DocsItem>>();
 
 	const [isWrapped, setWrapped] = useState<boolean>(false);
-	const [request, setRequest] = useState<object[]>([]);
 
 	const handleWrap = () => {
 		setWrapped((prev) => !prev);
 	};
 
-	const formValues = watch();
+	const rawValues = watch();
 
-	// useEffect(() => {
-	// 	const fetchParsed = async () => {
-	// 		try {
-	// 			const parsed = await parseFormSearch(formValues);
-	// 			setRequest(parsed);
-	// 		} catch (error) {
-	// 			console.error("parseFormSearch error:", error);
-	// 		}
-	// 	};
+	const filter: DocsFilter = {
+		id: rawValues.id ?? undefined,
+		doc_number: rawValues.doc_number ?? undefined,
+		last_worker_email:
+			callPlace == "worker"
+				? name
+				: (rawValues.last_worker_email ?? undefined),
+		last_storage:
+			callPlace == "storage"
+				? name
+				: (rawValues.last_storage ?? undefined),
+		category: rawValues.category ?? undefined,
+		transfer_status: rawValues.transfer_status ?? undefined,
+	};
 
-	// 	fetchParsed();
-	// }, [JSON.stringify(formValues)]);
+	console.log("Form changed:", filter);
 
 	return (
 		<div className={styles.objectFormSearch}>
@@ -37,7 +47,11 @@ const DocsSearch = () => {
 				className={styles.objectFormSearch__filter}
 				style={
 					isWrapped
-						? { height: "600px", overflow: "auto" }
+						? {
+								height: "368px",
+								overflow: "auto",
+								boxShadow: "0 12px 30px rgba(0, 0, 0, 0.75)",
+							}
 						: { height: "138px", overflow: "hidden" }
 				}
 			>
@@ -48,8 +62,8 @@ const DocsSearch = () => {
 						width="240px"
 					/>
 					<Input
-						label="Вид"
-						register={register("doc_type")}
+						label="Категория"
+						register={register("category")}
 						width="240px"
 					/>
 					<Input
@@ -66,25 +80,34 @@ const DocsSearch = () => {
 						isWrapped ? { display: "flex" } : { display: "none" }
 					}
 				>
-					<Input
-						label="Местонахождение"
+					<TransferSelect
 						register={register("transfer_status")}
-						width="240px"
-						type="string"
+						isAvailable={callPlace ? false : true}
+						defaultValue={
+							callPlace
+								? callPlace == "storage"
+									? "storage"
+									: "worker"
+								: undefined
+						}
 					/>
 
 					<Input
-						label="Подписант"
-						register={register("responsible_worker")}
+						label="Последнее хранилище"
+						register={register("last_storage")}
 						width="240px"
 						type="string"
+						value={callPlace == "storage" ? name : undefined}
+						isAvailable={callPlace == "storage" ? false : true}
 					/>
 
 					<Input
-						label="Дата подписи"
-						register={register("full_signed_at")}
+						label="Последний владелец"
+						register={register("last_worker")}
 						width="240px"
-						type="date"
+						type="string"
+						value={callPlace == "worker" ? name : undefined}
+						isAvailable={callPlace == "worker" ? false : true}
 					/>
 				</div>
 
@@ -109,7 +132,7 @@ const DocsSearch = () => {
 			</button>
 
 			<div className={styles.objectFormSearch__objectListPlace}>
-				{<ObjectList />}
+				<ObjectList filter={filter} />
 			</div>
 		</div>
 	);

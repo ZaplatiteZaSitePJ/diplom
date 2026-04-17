@@ -1,0 +1,26 @@
+.objectForm {
+	padding-top: 8px;
+	width: 100%;
+
+	h2 {
+		width: 100%;
+		font-size: var(--giant-font-size);
+		margin-bottom: 8px;
+	}
+
+	&__additionalContainer {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 16px 40px;
+		margin-bottom: 40px;
+	}
+
+	&__buttonsContainer {
+		display: flex;
+		padding: 12px 16px;
+		border-radius: 16px;
+		justify-content: space-between;
+		background-color: var(--dark-blue-color);
+		margin-top: 32px;
+	}
+}

@@ -6,7 +6,10 @@ import { ButtonBorderred } from "@shared/ui/ui-kit/";
 import FormPanel from "@widgets/formPanel/FormPanel";
 // import Tree from "@widgets/tree/ui/Tree";
 import { useNavigate } from "react-router-dom";
-// import Modal from "@features/modal/Modal";
+import Modal from "@features/modal/Modal";
+import ResourcesPanel from "@widgets/Resources/ResourcesSearch/ResourcesSearch";
+import ItemDeleteModal from "@widgets/DeleteModal/ObjectDelete";
+import StorageDeleteModal from "@widgets/DeleteModal/StorageDelete";
 // import ObjectDeleteModal from "@widgets/objects/ui/ObjectDeleteModal/ObjectDeleteModal";
 // import StorageDeleteModal from "@widgets/objects/ui/ObjectDeleteModal/StorageDeleteModal";
 // import QrCodeGen from "@widgets/qr-codes/QrCodeGen";
@@ -23,6 +26,7 @@ const EntitiesLayout: FC<EntitiesLayoutProps> = ({
 
 	const [isDeleting, setIsDeleting] = useState<boolean>(false);
 	const [qrVisible, setQrVisible] = useState<boolean>(false);
+	const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
 
 	const handleCloseModal = () => {
 		setIsDeleting(false);
@@ -35,6 +39,7 @@ const EntitiesLayout: FC<EntitiesLayoutProps> = ({
 			return;
 		}
 	};
+
 	return (
 		<main className={styles.main}>
 			<div className={styles.main__topContainer}>
@@ -53,8 +58,8 @@ const EntitiesLayout: FC<EntitiesLayoutProps> = ({
 				</div>
 
 				<div className={styles.main__buttonsBlock}>
-					<ButtonFilled onClick={openInTree}>
-						Открыть в дереве
+					<ButtonFilled onClick={() => setIsAddModalOpen(true)}>
+						Добавить объект
 					</ButtonFilled>
 
 					<ButtonBorderred
@@ -76,11 +81,16 @@ const EntitiesLayout: FC<EntitiesLayoutProps> = ({
 				)}
 			</div>
 
-			{/* <div className={styles.main__tree}>
-				{entitie && <Tree entitie={entitie} />}
-			</div> */}
+			{isAddModalOpen && (
+				<Modal
+					title="Добавить объект"
+					onClose={() => setIsAddModalOpen(false)}
+				>
+					<ResourcesPanel mode="create" />
+				</Modal>
+			)}
 
-			{/* {isDeleting && entitie && (
+			{isDeleting && entitie && (
 				<Modal
 					title="Удаление"
 					onClose={() => setIsDeleting(false)}
@@ -92,13 +102,13 @@ const EntitiesLayout: FC<EntitiesLayoutProps> = ({
 							handleClose={handleCloseModal}
 						/>
 					) : (
-						<ObjectDeleteModal
+						<ItemDeleteModal
 							object={entitie}
 							handleClose={handleCloseModal}
 						/>
 					)}
 				</Modal>
-			)} */}
+			)}
 
 			{/* {qrVisible && entitie && (
 				<Modal title={``} onClose={() => setQrVisible(false)}>

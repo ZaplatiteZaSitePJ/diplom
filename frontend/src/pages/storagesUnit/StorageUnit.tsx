@@ -5,6 +5,7 @@ import { useParams } from "react-router-dom";
 import type { StorageType } from "@entities/Storages/types/storages.type";
 import type { FC } from "react";
 import { useGetStorageByIdQuery } from "@app/api/storage/storageAPI";
+import ResourcesSearch from "@widgets/Resources/ResourcesSearch/ResourcesSearch";
 
 export default function StorageUnit() {
 	const { id } = useParams();
@@ -15,16 +16,30 @@ export default function StorageUnit() {
 	const storage = data?.data;
 
 	return (
-		<EntitiesLayout
-			treeLink={`/tree/${storage?.id}`}
-			title={storage?.storageName}
-			subTitle={`Хранилище / ${storage?.city}`}
-			form={
-				<StorageForm storage={storage} mode="save" onSaved={() => {}} />
-			}
-			statistic={<StorageStatistic storage={storage} />}
-			entitie={storage}
-		/>
+		<div className={styles.page}>
+			<EntitiesLayout
+				treeLink={`/tree/${storage?.id}`}
+				title={storage?.storageName}
+				subTitle={`Хранилище / ${storage?.city}`}
+				form={
+					<StorageForm
+						storage={storage}
+						mode="save"
+						onSaved={() => {}}
+					/>
+				}
+				statistic={<StorageStatistic storage={storage} />}
+				entitie={storage}
+			/>
+
+			<div className={styles.page__resources}>
+				<h2>Ресурсы на хранении</h2>
+				<ResourcesSearch
+					callPlace="storage"
+					name={storage?.storageName}
+				/>
+			</div>
+		</div>
 	);
 }
 

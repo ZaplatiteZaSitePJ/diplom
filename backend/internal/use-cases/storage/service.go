@@ -69,32 +69,67 @@ func (s *StorageService) ChangeStorageByID(storageID uuid.UUID, input *dto.Creat
 	return updatedStorage, nil
 }
 
-func (s *StorageService) FindStorageByID(storageID uuid.UUID) (*domain.Storage,  error){
+func (s *StorageService) FindStorageByID(storageID uuid.UUID) (*domain.Storage, error) {
 	logger.Info("Trying to find storage: ", storageID)
 
-	findedStorage, err := s.repo.FindByID(storageID)
+	storage, err := s.repo.FindByID(storageID)
 	if err != nil {
-	 	return nil,  err
+		return nil, err
 	}
 
-	return findedStorage,  nil
+	itemsAmount, occupiedCells, err := s.repo.GetStorageStats(storageID)
+	if err != nil {
+		return nil, err
+	}
+
+	storage.ItemsAmount = itemsAmount
+	storage.OccupiedCells = occupiedCells
+
+	return storage, nil
 }
 
 func (u *StorageService) FindAllStorages() ([]*domain.Storage, error) {
 	logger.Info("Trying to find all storages")
-	findedStorages, err := u.repo.FindAll()
 
+	storages, err := u.repo.FindAll()
 	if err != nil {
-	 	wErr := custom_errors.New(err, 500)
-	 	wErr.AddResponseData("Internal server error")
-	 	wErr.AddLogData(err.Error())
+		wErr := custom_errors.New(err, 500)
+		wErr.AddResponseData("Internal server error")
+		wErr.AddLogData(err.Error())
 		return nil, wErr
 	}
-	return findedStorages, nil
+
+	for _, s := range storages {
+		itemsAmount, occupiedCells, err := u.repo.GetStorageStats(s.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		s.ItemsAmount = itemsAmount
+		s.OccupiedCells = occupiedCells
+	}
+
+	return storages, nil
 }
 
-func (s *StorageService) DeleteStorageByID(storageID uuid.UUID) error {
-	return nil
+func (s *StorageService) DeleteStorageByID(storageID uuid.UUID, newStorageName *string) error {
+	logger.Info("Deleting storage: ", storageID)
+
+	// если есть новый склад
+	if newStorageName != nil && *newStorageName != "" {
+		newStorage, err := s.repo.FindByExactName(*newStorageName)
+		if err != nil {
+			return err
+		}
+		if newStorage == nil {
+			return custom_errors.New(fmt.Errorf("storage not found"), 404)
+		}
+
+		return s.repo.TransferAndDelete(storageID, newStorage.ID)
+	}
+
+	// иначе просто удалить всё
+	return s.repo.DeleteWithItems(storageID)
 }
 
 func (s *StorageService) FindStorageByExactName(name string) (*domain.Storage, error) {

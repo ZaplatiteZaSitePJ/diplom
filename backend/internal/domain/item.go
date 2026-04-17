@@ -34,10 +34,9 @@ type Document struct {
 	ResponsibleWorkerID   uuid.UUID  `db:"responsible_worker_id" json:"responsible_worker_id"`
 	FullSignedAt          time.Time  `db:"full_signed_at" json:"full_signed_at"`
 	ResponsibleWorkerEmail string    `db:"responsible_worker_email" json:"responsible_worker_email"`
-	NeededSigns           bool       `db:"needed_signs" json:"needed_signs"`
-	ReceivedSigns         bool       `db:"received_signs" json:"received_signs"`
+	NeededSigns           int       `db:"needed_signs" json:"needed_signs"`
+	ReceivedSigns         int       `db:"received_signs" json:"received_signs"`
 	DocNumber             string     `db:"doc_number" json:"doc_number"`
-	DocType               string     `db:"doc_type" json:"doc_type"`
 }
 
 type Merch struct {
@@ -55,7 +54,7 @@ type Software struct {
 	Vendor            string     `db:"vendor" json:"vendor"`
 	LicenseKey        string     `db:"license_key" json:"license_key"`
 	Title             string     `db:"title" json:"title"`
-	ResponsibleWorker string     `db:"responsible_worker" json:"responsible_worker"`
+	ResponsibleWorkerID string     `db:"responsible_worker" json:"responsible_worker_id"`
 	StartedAt         time.Time  `db:"started_at" json:"started_at"`
 	ExpiredAt         time.Time  `db:"expired_at" json:"expired_at"`
 	UpdatedAt         time.Time  `db:"updated_at" json:"updated_at"`

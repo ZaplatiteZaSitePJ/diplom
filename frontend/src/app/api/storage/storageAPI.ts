@@ -27,6 +27,7 @@ export const storageApi = baseApi.injectEndpoints({
 			invalidatesTags: ["Storage"],
 		}),
 
+		// PATCH
 		updateStorage: builder.mutation<
 			StorageResponse,
 			{ id: string; body: Partial<StorageType> }
@@ -40,10 +41,14 @@ export const storageApi = baseApi.injectEndpoints({
 		}),
 
 		// DELETE
-		deleteStorage: builder.mutation<void, string>({
-			query: (id) => ({
+		deleteStorage: builder.mutation<
+			void,
+			{ id: string; newStorageName: string | undefined }
+		>({
+			query: ({ id, newStorageName }) => ({
 				url: `/admin/storages/${id}`,
 				method: "DELETE",
+				params: newStorageName ? { newStorageName } : undefined,
 			}),
 			invalidatesTags: ["Storage"],
 		}),

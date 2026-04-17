@@ -1,19 +1,28 @@
 // entities/tech/techApi.ts
-import type { TechItem } from "@entities/Objects/types/tech.type";
+import type { TechFilter, TechItem } from "@entities/Objects/types/tech.type";
 import { baseApi } from "../../api";
 import type { TechResponse, TechResponseMulti } from "./response.type";
+import { type Response } from "@app/api/response.type";
 
 export const techApi = baseApi.injectEndpoints({
 	endpoints: (builder) => ({
 		// GET ALL
-		getTechs: builder.query<TechResponseMulti, void>({
-			query: () => "/admin/items/tech",
+		getTechs: builder.query<TechResponseMulti, TechFilter>({
+			query: (filter) => {
+				console.log("RTK Query filter:", filter);
+
+				return {
+					url: "/admin/items/tech",
+					method: "GET",
+					params: filter, // 👈 сюда прокидывается объект
+				};
+			},
 			providesTags: ["Tech"],
 		}),
 
 		// GET BY ID
 		getTechById: builder.query<TechResponse, string>({
-			query: (id) => `/admin/tech/${id}`,
+			query: (id) => `/admin/items/tech/${id}`,
 			providesTags: ["Tech"],
 		}),
 
@@ -27,12 +36,13 @@ export const techApi = baseApi.injectEndpoints({
 			invalidatesTags: ["Tech"],
 		}),
 
+		//PATCH
 		updateTech: builder.mutation<
 			TechResponse,
 			{ id: string; body: Partial<TechItem> }
 		>({
 			query: ({ id, body }) => ({
-				url: `/admin/tech/${id}`,
+				url: `/admin/items/tech/${id}`,
 				method: "PATCH",
 				body,
 			}),
@@ -42,18 +52,23 @@ export const techApi = baseApi.injectEndpoints({
 		// DELETE
 		deleteTech: builder.mutation<void, string>({
 			query: (id) => ({
-				url: `/admin/tech/${id}`,
+				url: `/admin/items/${id}`,
 				method: "DELETE",
 			}),
 			invalidatesTags: ["Tech"],
+		}),
+
+		getCategories: builder.query<Response & { data: string[] }, string>({
+			query: (type_id) => `/admin/categories/${type_id}`,
 		}),
 	}),
 });
 
 export const {
 	useGetTechsQuery,
-	useGetTechByIdQuery,
+	useLazyGetTechByIdQuery,
 	useCreateTechMutation,
 	useDeleteTechMutation,
 	useUpdateTechMutation,
+	useGetCategoriesQuery,
 } = techApi;
