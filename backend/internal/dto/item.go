@@ -53,31 +53,16 @@ type SoftwareItemPublic struct {
 }
 
 type SoftwareFilter struct {
-	ID            *string `json:"id"`
-	Category      *string `json:"category"`
-	LastWorkerEmail    *string `json:"last_worker_email"`
-	Vendor        *string     `json:"vendor"`
-	LicenseKey    *string     `json:"license_key"`
-	Title         *string     `json:"title"`
-	PurchasePrice     *float64   `json:"purchase_price"`
-}
+	ID                *string  `json:"id"`
+	Category          *string  `json:"category"`
+	LastWorkerEmail   *string  `json:"last_worker_email"`
+	Vendor            *string  `json:"vendor"`
+	LicenseKey        *string  `json:"license_key"`
+	Title             *string  `json:"title"`
+	PurchasePrice     *float64 `json:"purchase_price"`
 
-type MerchItemPublic struct {
-	ID                uuid.UUID `json:"id"`
-	UniversalName     string    `json:"universal_name"`
-	Type              string    `json:"type"`
-	Category          string    `json:"category"`
-	LastStorage       string    `json:"last_storage"`
-	LastWorker        string    `json:"last_worker"`
-	TransferStatus    string    `json:"transfer_status"`
-	QualityStatus     string    `json:"quality_status"`
-	PurchasePrice     float64   `json:"purchase_price"`
-	OccupiedCells     int       `json:"occupied_cells"`
-
-	Title  string          `json:"title"`
-	Size   string          `json:"size"`
-	Price  int             `json:"price"`
-	Color  string          `json:"color"`
+	TransferStatus    *string  `json:"transfer_status"`   
+	LastStorage       *string  `json:"last_storage"`      
 }
 
 type DocsItemPublic struct {

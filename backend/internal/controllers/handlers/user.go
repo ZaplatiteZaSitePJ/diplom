@@ -12,21 +12,23 @@ import (
 	"inno-accounting/pkg/server_utils/configure_headers"
 	custom_errors "inno-accounting/pkg/server_utils/errors"
 	"inno-accounting/pkg/server_utils/response_message"
+	"inno-accounting/pkg/utils"
 	"net/http"
-	"strconv"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 )
 
-// Creating user
+//
+// 🔹 CREATE USER
+//
 func (h *Handlers) CreateUser(w http.ResponseWriter, r *http.Request) {
 	configure_headers.DefaultHeader(w)
-	var newUser dto.CreateUser
 
+	var newUser dto.CreateUser
 	json.NewDecoder(r.Body).Decode(&newUser)
 
-	if newUser.Email=="" || newUser.Password=="" || newUser.Username=="" {
+	if newUser.Email == "" || newUser.Password == "" || newUser.Name == "" || newUser.LastName == "" {
 		errStr := "one or more required fields are missing"
 		jsonErr := app_errors.InvalidInput(errStr, errors.New(errStr))
 		response_message.WrapperResponseJSON(w, app_errors.HTTPStatusFromCode(jsonErr.Code), jsonErr.Message)
@@ -34,93 +36,118 @@ func (h *Handlers) CreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user, err := h.User.CreateUser(&newUser)
-
 	if err != nil {
 		var appErr *app_errors.AppError
-		
+
 		if errors.As(err, &appErr) {
 			response_message.WrapperResponseJSON(w, app_errors.HTTPStatusFromCode(appErr.Code), appErr.Message)
 		}
-		
-	} else {
-		safetyUser := dto.PublicUser{Username: user.Username, Email: user.Email}
-		logger.Info(fmt.Sprintf("User created succesfully: %+v", safetyUser))
-		response_message.WrapperResponseJSON(w, 201, safetyUser)
+		return
 	}
+
+	safetyUser := dto.PublicUserFromModel(user)
+	logger.Info(fmt.Sprintf("User created successfully: %+v", safetyUser))
+	response_message.WrapperResponseJSON(w, 201, safetyUser)
 }
 
-// Getting user by ID
+//
+// 🔹 GET USER BY ID
+//
 func (h *Handlers) GetUserByID(w http.ResponseWriter, r *http.Request) {
 	configure_headers.DefaultHeader(w)
 
-	//GETTING USER ID FROM REQUEST
 	idStr := mux.Vars(r)["id"]
 	userUUID, err := uuid.Parse(idStr)
-
 	if err != nil {
 		errStr := "invalid user ID"
 		idErr := app_errors.InvalidInput(errStr, errors.New(errStr))
 		response_message.WrapperResponseJSON(w, app_errors.HTTPStatusFromCode(idErr.Code), idErr.Message)
 		return
 	}
-	
-	findedUser, err := h.User.FindUserByID(userUUID)
 
-		if err != nil {
+	user, err := h.User.FindUserByID(userUUID)
+	if err != nil {
 		var appErr *app_errors.AppError
-		
+
 		if errors.As(err, &appErr) {
 			response_message.WrapperResponseJSON(w, app_errors.HTTPStatusFromCode(appErr.Code), appErr.Message)
 		}
-	} else {
-		safetyUser := dto.PublicUserFromModel(findedUser)
-		logger.Info("User finded succesfully")
-		response_message.WrapperResponseJSON(w, 200, safetyUser)
+		return
 	}
+
+	safetyUser := dto.PublicUserFromModel(user)
+	logger.Info("User found successfully")
+	response_message.WrapperResponseJSON(w, 200, safetyUser)
 }
 
-// Getting ME user
-
+//
+// 🔹 GET ME
+//
 func (h *Handlers) GetUserByMe(w http.ResponseWriter, r *http.Request) {
 	authData := r.Context().Value(middleware.GetUserIDKey()).(jwt.AuthData)
 
 	user, err := h.User.FindUserByID(authData.UserID)
 	if err != nil {
 		custom_errors.ErrorResponse(w, err, logger.GetLoger())
-	} else {
-		convertedUsers := dto.PublicUserFromModel(user)
-		logger.Info("Users finded succesfully")
-		response_message.WrapperResponseJSON(w, 200, convertedUsers)
+		return
 	}
+
+	convertedUser := dto.PublicUserFromModel(user)
+	logger.Info("User fetched successfully")
+	response_message.WrapperResponseJSON(w, 200, convertedUser)
 }
 
-// Getting all user
+//
+// 🔹 GET ALL USERS
+//
 func (h *Handlers) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 	configure_headers.DefaultHeader(w)
 
-	users, err := h.User.FindAllUsers()
+	q := r.URL.Query()
+
+	filter := &dto.UserFilter{
+		ID:       utils.StrPtr(q.Get("id")),
+		Email:    utils.StrPtr(q.Get("email")),
+		Name:     utils.StrPtr(q.Get("name")),
+		LastName: utils.StrPtr(q.Get("lastname")),
+		Post:     utils.StrPtr(q.Get("post")),
+		Grade:    utils.StrPtr(q.Get("grade")),
+		City:     utils.StrPtr(q.Get("city")),
+	}
+
+	users, err := h.User.FindAllUsers(filter)
 	if err != nil {
 		custom_errors.ErrorResponse(w, err, logger.GetLoger())
-	} else {
-		convertedUsers := dto.SeveralUsersToPublic(users)
-		logger.Info("Users finded succesfully")
-		response_message.WrapperResponseJSON(w, 200, convertedUsers)
+		return
 	}
+
+	convertedUsers := dto.SeveralUsersToPublic(users)
+	logger.Info("Users fetched successfully")
+	response_message.WrapperResponseJSON(w, 200, convertedUsers)
 }
 
-// Deleting user by ID
+//
+// 🔹 DELETE USER
+//
 func (h *Handlers) DeleteUserByID(w http.ResponseWriter, r *http.Request) {
 	configure_headers.DefaultHeader(w)
 
-	//GETTING USER ID FROM REQUEST
-	userID, err := strconv.Atoi(mux.Vars(r)["id"])
+	idStr := mux.Vars(r)["id"]
+	userUUID, err := uuid.Parse(idStr)
 	if err != nil {
 		wError := custom_errors.New(err, 400)
-		wError.AddLogData(fmt.Sprintf("Invalid user ID: %v. ID must be decimal", mux.Vars(r)["id"]))
-		wError.AddResponseData(fmt.Sprintf("Invalid user ID: %v. ID must be decimal", mux.Vars(r)["id"]))
+		wError.AddLogData(fmt.Sprintf("Invalid user ID: %v", idStr))
+		wError.AddResponseData("Invalid user ID")
 		custom_errors.ErrorResponse(w, wError, logger.GetLoger())
 		return
 	}
 
-	err = h.User.DeleteByID(userID)
+	err = h.User.DeleteByID(userUUID)
+	if err != nil {
+		custom_errors.ErrorResponse(w, err, logger.GetLoger())
+		return
+	}
+
+	logger.Info("User deleted successfully")
+	response_message.WrapperResponseJSON(w, 200, "user deleted")
 }

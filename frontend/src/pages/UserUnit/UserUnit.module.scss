@@ -1,0 +1,15 @@
+.page {
+	display: flex;
+	flex-direction: column;
+	gap: 32px;
+
+	&__resources {
+		display: flex;
+		flex-direction: column;
+		gap: 24px;
+
+		h2 {
+			font-size: var(--giant-font-size);
+		}
+	}
+}

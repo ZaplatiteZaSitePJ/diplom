@@ -21,4 +21,6 @@ export type SoftwareFilter = {
 	title?: string;
 
 	purchase_price?: number;
+	transfer_status?: string;
+	last_storage?: string;
 };

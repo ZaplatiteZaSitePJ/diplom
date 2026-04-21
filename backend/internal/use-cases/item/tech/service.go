@@ -288,3 +288,27 @@ func (t *TechService) GetCategoriesByTypeID(typeID int) ([]string, error) {
 
 	return categories, nil
 }
+
+func (t *TechService) FindTechByUserID(userID uuid.UUID) ([]*dto.TechItemPublic, error) {
+	logger.Info("Finding tech by userID:", userID)
+
+	// проверим что пользователь существует
+	_, err := t.userService.FindUserByID(userID)
+	if err != nil {
+		return nil, app_errors.Unprocessable("user does not exist", err)
+	}
+
+	techs, err := t.repo.FindByUserID(userID)
+	if err != nil {
+		wErr := custom_errors.New(err, 500)
+		wErr.AddResponseData("Internal server error")
+		wErr.AddLogData(err.Error())
+		return nil, wErr
+	}
+
+	if techs == nil {
+		return []*dto.TechItemPublic{}, nil
+	}
+
+	return techs, nil
+}

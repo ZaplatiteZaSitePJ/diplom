@@ -5,33 +5,53 @@ import (
 	"regexp"
 	"strings"
 	"time"
-	"unicode/utf8"
 
 	"github.com/google/uuid"
 )
 
 type User struct {
-	ID             uuid.UUID 		`json:"id"`
-	Username       string	`json:"username"`
-	Email          string	`json:"email"`
-	Role		   string   `json:"role"`
-	HashedPassword string	`json:"hashed_password,omitempty"`
-	CreatedAt      time.Time       `db:"created_at" json:"created_at"`
-    UpdatedAt      time.Time       `db:"updated_at" json:"updated_at"`
-    DeletedAt      *time.Time      `db:"deleted_at" json:"deleted_at,omitempty"`
+	ID        uuid.UUID `json:"id"`
+	Email     string    `json:"email"`
+	Name      string    `json:"name"`
+	LastName  string    `json:"lastname"`
+	Post      string    `json:"post"`
+	Grade     string    `json:"grade"`
+	City      string    `json:"city"`
+	Role      string    `json:"role"`
+
+	HashedPassword string `json:"-"`
+	
+	CreatedAt time.Time  `json:"created_at"`
+	UpdatedAt time.Time  `json:"updated_at"`
+	DeletedAt *time.Time `json:"deleted_at,omitempty"`
 }
 
 var emailRegex = regexp.MustCompile(`^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$`)
 
 func (u *User) ValidateUser() error {
-	trimedUsername := strings.TrimSpace(u.Username)
+	if strings.TrimSpace(u.Name) == "" {
+		return errors.New("name required")
+	}
 
-	if trimedUsername == "" || utf8.RuneCountInString(trimedUsername) < 3 {
-		return errors.New("username cannot be empty or less 3 letter")
+	if strings.TrimSpace(u.LastName) == "" {
+		return errors.New("lastname required")
 	}
 
 	if !emailRegex.MatchString(u.Email) {
-		return errors.New("invalid email format")
+		return errors.New("invalid email")
+	}
+
+	validGrades := map[string]bool{
+		"intern": true, "junior": true, "middle": true,
+		"senior": true, "team lead": true, "manager": true,
+	}
+
+	if !validGrades[u.Grade] {
+		return errors.New("invalid grade")
+	}
+
+	if u.Role != "user" && u.Role != "admin" {
+		return errors.New("invalid role")
 	}
 
 	return nil

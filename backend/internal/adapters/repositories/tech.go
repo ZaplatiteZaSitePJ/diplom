@@ -413,3 +413,4 @@ func (r *TechRepository) GetCategoriesByTypeID(typeID int) ([]string, error) {
 
 	return categories, nil
 }
+

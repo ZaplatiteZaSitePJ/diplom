@@ -27,16 +27,25 @@ const DocsSearch: FC<ResourcesProps> = ({ callPlace, name }) => {
 	const filter: DocsFilter = {
 		id: rawValues.id ?? undefined,
 		doc_number: rawValues.doc_number ?? undefined,
+
 		last_worker_email:
-			callPlace == "worker"
+			callPlace === "worker"
 				? name
 				: (rawValues.last_worker_email ?? undefined),
+
 		last_storage:
-			callPlace == "storage"
+			callPlace === "storage"
 				? name
 				: (rawValues.last_storage ?? undefined),
+
 		category: rawValues.category ?? undefined,
-		transfer_status: rawValues.transfer_status ?? undefined,
+
+		transfer_status:
+			callPlace === "worker"
+				? "worker"
+				: callPlace === "storage"
+					? "storage"
+					: (rawValues.transfer_status ?? undefined),
 	};
 
 	console.log("Form changed:", filter);

@@ -3,9 +3,11 @@ import Auth from "@pages/auth/Auth";
 // import StorageUnit from "@pages/storageUnit/StorageUnit";
 import AuthLayout from "@pages/auth/AuthLayout";
 import ItemUnit from "@pages/itemUnit/ItemUnit";
+import Personal from "@pages/personal/Personal";
 import Categories from "@pages/resources/Resources";
 import Storages from "@pages/storages/Storages";
 import StorageUnit from "@pages/storagesUnit/StorageUnit";
+import UserUnit from "@pages/UserUnit/UserUnit";
 import MainLayout from "@shared/layouts/MainLayout";
 import type { JSX } from "react";
 // import MainLayout from "@shared/ui/layouts/MainLayout";
@@ -53,6 +55,11 @@ const router = createBrowserRouter(
 					<Route path="storages">
 						<Route index element={<Storages />} />
 						<Route path=":id" element={<StorageUnit />} />
+					</Route>
+
+					<Route path="personal">
+						<Route index element={<Personal />} />
+						<Route path=":id" element={<UserUnit />} />
 					</Route>
 				</Route>
 			</Route>

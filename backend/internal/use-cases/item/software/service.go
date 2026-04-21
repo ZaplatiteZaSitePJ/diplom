@@ -179,7 +179,6 @@ func (s *SoftwareService) ChangeSoftwareByID(id uuid.UUID, input *dto.SoftwareIt
 		existing.PurchasePrice = &input.PurchasePrice
 	}
 
-	// 🔥 ВАЖНО: пересобираем universal_name
 	existing.UniversalName = existing.Vendor + " " + existing.Title
 
 	return s.repo.Change(id, existing)

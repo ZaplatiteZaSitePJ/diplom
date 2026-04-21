@@ -2,8 +2,10 @@ package repositories
 
 import (
 	"database/sql"
+	"fmt"
 	"inno-accounting/internal/domain"
 	"inno-accounting/internal/dto"
+	"strings"
 
 	"github.com/google/uuid"
 )
@@ -104,27 +106,89 @@ func (r *SoftwareRepository) FindByID(id uuid.UUID) (*domain.Software, error) {
 }
 
 func (r *SoftwareRepository) FindAll(filter *dto.SoftwareFilter) ([]*dto.SoftwareItemPublic, error) {
-	query := `
+	baseQuery := `
 	SELECT 
 		i.id,
 		i.universal_name,
 		c.name,
+		s.storage_name,
 		u.email,
+		i.transfer_status,
 		i.purchase_price,
-		s.vendor,
-		s.license_key,
-		s.title,
-		s.started_at,
-		s.expired_at,
-		s.updated_at
+		sw.vendor,
+		sw.license_key,
+		sw.title,
+		sw.started_at,
+		sw.expired_at,
+		sw.updated_at
 	FROM items i
-	JOIN software s ON s.item_id = i.id
+	JOIN software sw ON sw.item_id = i.id
 	LEFT JOIN categories c ON c.id = i.category_id
 	LEFT JOIN users u ON u.id = i.last_worker_id
+	LEFT JOIN storages s ON s.id = i.last_storage_id
 	WHERE i.type_id = 1
 	`
 
-	rows, err := r.db.Query(query)
+	args := []interface{}{}
+	conditions := []string{}
+	argPos := 1
+
+	if filter != nil {
+
+		if filter.ID != nil {
+			conditions = append(conditions, fmt.Sprintf("i.id = $%d", argPos))
+			args = append(args, *filter.ID)
+			argPos++
+		}
+
+		if filter.Category != nil {
+			conditions = append(conditions, fmt.Sprintf("c.name = $%d", argPos))
+			args = append(args, *filter.Category)
+			argPos++
+		}
+
+		if filter.LastWorkerEmail != nil {
+			conditions = append(conditions, fmt.Sprintf("u.email = $%d", argPos))
+			args = append(args, *filter.LastWorkerEmail)
+			argPos++
+		}
+
+		if filter.LastStorage != nil {
+			conditions = append(conditions, fmt.Sprintf("s.storage_name = $%d", argPos))
+			args = append(args, *filter.LastStorage)
+			argPos++
+		}
+
+		if filter.TransferStatus != nil {
+			conditions = append(conditions, fmt.Sprintf("i.transfer_status = $%d", argPos))
+			args = append(args, *filter.TransferStatus)
+			argPos++
+		}
+
+		if filter.Vendor != nil {
+			conditions = append(conditions, fmt.Sprintf("sw.vendor ILIKE $%d", argPos))
+			args = append(args, "%"+*filter.Vendor+"%")
+			argPos++
+		}
+
+		if filter.Title != nil {
+			conditions = append(conditions, fmt.Sprintf("sw.title ILIKE $%d", argPos))
+			args = append(args, "%"+*filter.Title+"%")
+			argPos++
+		}
+
+		if filter.LicenseKey != nil {
+			conditions = append(conditions, fmt.Sprintf("sw.license_key ILIKE $%d", argPos))
+			args = append(args, "%"+*filter.LicenseKey+"%")
+			argPos++
+		}
+	}
+
+	if len(conditions) > 0 {
+		baseQuery += " AND " + strings.Join(conditions, " AND ")
+	}
+
+	rows, err := r.db.Query(baseQuery, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -136,7 +200,9 @@ func (r *SoftwareRepository) FindAll(filter *dto.SoftwareFilter) ([]*dto.Softwar
 		item := &dto.SoftwareItemPublic{}
 
 		var category sql.NullString
+		var storage sql.NullString
 		var email sql.NullString
+		var transferStatus sql.NullString
 		var purchasePrice sql.NullFloat64
 		var startedAt sql.NullTime
 		var expiredAt sql.NullTime
@@ -146,7 +212,9 @@ func (r *SoftwareRepository) FindAll(filter *dto.SoftwareFilter) ([]*dto.Softwar
 			&item.ID,
 			&item.UniversalName,
 			&category,
+			&storage,
 			&email,
+			&transferStatus,
 			&purchasePrice,
 			&item.Vendor,
 			&item.LicenseKey,
@@ -159,53 +227,31 @@ func (r *SoftwareRepository) FindAll(filter *dto.SoftwareFilter) ([]*dto.Softwar
 			return nil, err
 		}
 
-		// category
 		if category.Valid {
 			item.Category = category.String
-		} else {
-			item.Category = ""
 		}
 
-		// last worker
 		if email.Valid {
 			item.LastWorkerEmail = &email.String
-		} else {
-			item.LastWorkerEmail = nil
 		}
 
-		// purchase price
 		if purchasePrice.Valid {
 			item.PurchasePrice = purchasePrice.Float64
-		} else {
-			item.PurchasePrice = 0
 		}
 
-		// started at
 		if startedAt.Valid {
 			item.StartedAt = &startedAt.Time
-		} else {
-			item.StartedAt = nil
 		}
 
-		// expired at
 		if expiredAt.Valid {
 			item.ExpiredAt = &expiredAt.Time
-		} else {
-			item.ExpiredAt = nil
 		}
 
-		// updated at
 		if updatedAt.Valid {
 			item.UpdatedAt = &updatedAt.Time
-		} else {
-			item.UpdatedAt = nil
 		}
 
 		result = append(result, item)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, err
 	}
 
 	return result, nil

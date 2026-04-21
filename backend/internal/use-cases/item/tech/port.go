@@ -16,4 +16,5 @@ type TechRepository interface {
 	FindCategoryIDByName(string) (int, error)
 	FindCategoryNameByID(int) (*string, error)
 	GetCategoriesByTypeID(typeID int) ([]string, error)
+	FindByUserID(userID uuid.UUID) ([]*dto.TechItemPublic, error)
 }

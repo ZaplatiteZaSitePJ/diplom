@@ -22,84 +22,135 @@ func New(repo UserRepository) *UserService {
 	}
 }
 
-
-func (u *UserService) CreateUser(input *dto.CreateUser) (*domain.User, error){
+//
+// 🔹 CREATE USER
+//
+func (s *UserService) CreateUser(input *dto.CreateUser) (*domain.User, error) {
 	logger.Info("Creating new user: ", input)
 
-	var hashed_password string
-
-	// Validation password
 	if err := crypt_password.ValidatePassword(input.Password); err != nil {
-		logger.Info("service", err)
 		return nil, app_errors.Unprocessable("password too weak", err)
 	}
 
-	// Hashing password
-	hashed_password, err := crypt_password.EncryptPassword(input.Password) 
+	hashedPassword, err := crypt_password.EncryptPassword(input.Password)
 	if err != nil {
-		logger.Info("service", err)
 		return nil, app_errors.Internal("server unavailable now. Try again later", err)
 	}
-	
-	newUser := domain.User{
-		Email: input.Email,
-		Username: input.Username,
-		HashedPassword: hashed_password,
-		ID: uuid.New(),
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+
+	user := &domain.User{
+		ID:             uuid.New(),
+		Email:          input.Email,
+		Name:           input.Name,
+		LastName:       input.LastName,
+		Post:           input.Post,
+		Grade:          input.Grade,
+		City:           input.City,
+		Role:           input.Role,
+		HashedPassword: hashedPassword,
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
 	}
 
-	// Validation user
-	if err := newUser.ValidateUser(); err != nil {
-		logger.Info("service", err)
-		return nil, app_errors.Unprocessable("Invalid username or email", err)
+	if err := user.ValidateUser(); err != nil {
+		return nil, app_errors.Unprocessable("invalid user data", err)
 	}
 
-	return u.repo.Save(&newUser)
+	return s.repo.Save(user)
 }
 
-func (u *UserService) FindUserByID(userID uuid.UUID) (*domain.User,  error){
-	logger.Info("Trying to find user: ", userID)
+//
+// 🔹 GET ALL USERS
+//
+func (s *UserService) FindAllUsers(filter *dto.UserFilter) ([]*domain.User, error) {
+	logger.Info("Trying to find users with filter")
 
-	findedUser, err := u.repo.FindByID(userID)
+	users, err := s.repo.FindAll(filter)
 	if err != nil {
-	 	return nil,  err
-	}
-
-	return findedUser,  nil
-}
-
-func (u *UserService) FindAllUsers() ([]*domain.User, error) {
-	logger.Info("Trying to find all users")
-	findedUsers, err := u.repo.FindAll()
-
-	if err != nil {
-	 	wErr := custom_errors.New(err, 500)
-	 	wErr.AddResponseData("Internal server error")
-	 	wErr.AddLogData(err.Error())
+		wErr := custom_errors.New(err, 500)
+		wErr.AddResponseData("Internal server error")
+		wErr.AddLogData(err.Error())
 		return nil, wErr
 	}
-	return findedUsers, nil
+
+	return users, nil
 }
 
-func (u *UserService) DeleteByID(userID int) error {
-	return nil
+//
+// 🔹 GET USER BY ID
+//
+func (s *UserService) FindUserByID(userID uuid.UUID) (*domain.User, error) {
+	logger.Info("Trying to find user: ", userID)
+
+	user, err := s.repo.FindByID(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
 }
 
-// FindUserByEmail ищет пользователя по email
-func (u *UserService) FindUserByEmail(email string) (*domain.User, error) {
+//
+// 🔹 UPDATE USER (PATCH)
+//
+func (s *UserService) UpdateUser(userID uuid.UUID, input *dto.UpdateUser) (*domain.User, error) {
+	logger.Info("Updating user: ", userID)
+
+	user, err := s.repo.FindByID(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	if input.Email != nil {
+		user.Email = *input.Email
+	}
+	if input.Name != nil {
+		user.Name = *input.Name
+	}
+	if input.LastName != nil {
+		user.LastName = *input.LastName
+	}
+	if input.Post != nil {
+		user.Post = *input.Post
+	}
+	if input.Grade != nil {
+		user.Grade = *input.Grade
+	}
+	if input.City != nil {
+		user.City = *input.City
+	}
+
+	user.UpdatedAt = time.Now()
+
+	if err := user.ValidateUser(); err != nil {
+		return nil, app_errors.Unprocessable("invalid user data", err)
+	}
+
+	return s.repo.Update(user)
+}
+
+//
+// 🔹 DELETE USER (SOFT DELETE)
+//
+func (s *UserService) DeleteByID(userID uuid.UUID) error {
+	logger.Info("Deleting user: ", userID)
+
+	return s.repo.Delete(userID)
+}
+
+//
+// 🔹 FIND USER BY EMAIL
+//
+func (s *UserService) FindUserByEmail(email string) (*domain.User, error) {
 	logger.Info("Trying to find user by email: ", email)
 
 	if email == "" {
 		return nil, app_errors.InvalidInput("email parameter is required", nil)
 	}
 
-	user, err := u.repo.FindByEmail(email)
+	user, err := s.repo.FindByEmail(email)
 	if err != nil {
 		return nil, err
 	}
 
-	logger.Info("User found by email: ", user.Email)
 	return user, nil
 }

@@ -38,6 +38,15 @@ const SoftwareSearch: FC<Props> = ({ callPlace, name }) => {
 			callPlace === "worker"
 				? name
 				: (raw.last_worker_email ?? undefined),
+
+		transfer_status:
+			callPlace === "worker"
+				? "worker"
+				: callPlace === "storage"
+					? "storage"
+					: undefined,
+
+		last_storage: callPlace === "storage" ? name : undefined,
 	};
 
 	return (
