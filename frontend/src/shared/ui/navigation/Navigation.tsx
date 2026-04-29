@@ -63,6 +63,17 @@ export default function Navigation() {
 				>
 					Сообщения
 				</NavLink>
+
+				<NavLink
+					to={"/profile"}
+					className={({ isActive }) =>
+						cn(styles.navigation__pages, {
+							[styles.navigation__active]: isActive,
+						})
+					}
+				>
+					Профиль
+				</NavLink>
 			</nav>
 		</div>
 	);

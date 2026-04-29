@@ -22,7 +22,6 @@ const cityFilter = (array: StorageType[], city: string | undefined) => {
 	});
 };
 
-// 👉 новый фильтр
 const capacityFilter = (
 	array: StorageType[],
 	requiredCells: number | undefined,
@@ -35,15 +34,25 @@ const capacityFilter = (
 	});
 };
 
+const fullFilter = (array: StorageType[], isFull: boolean | undefined) => {
+	if (!array || isFull === false) return array;
+
+	return array.filter(
+		(element) => 95 <= (element.occupied_cells / element.capacity) * 100,
+	);
+};
+
 export default function storageFiltration(
 	name: string | undefined,
 	city: string | undefined,
 	array: StorageType[],
-	requiredCells?: number, // 👈 новый параметр
+	requiredCells?: number,
+	isFull?: boolean,
 ) {
 	const filteredByName = nameFilter(array, name);
 	const filteredByCity = cityFilter(filteredByName, city);
 	const filteredByCapacity = capacityFilter(filteredByCity, requiredCells);
+	const filteredByFullness = fullFilter(filteredByCapacity, isFull);
 
-	return filteredByCapacity;
+	return filteredByFullness;
 }

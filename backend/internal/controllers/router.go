@@ -16,6 +16,7 @@ func InitRouter(h *handlers.Handlers, jwtManager jwt.TokenManager) *mux.Router {
 	// PUBLIC
 	router.HandleFunc(urlPrefix+"/auth/register", h.CreateUser).Methods("POST")
 	router.HandleFunc(urlPrefix+"/auth/login", h.Login).Methods("POST")
+	router.HandleFunc(urlPrefix+"/auth/refresh", h.Refresh).Methods("POST")
 
 	// PROTECTED
 	protected := router.PathPrefix(urlPrefix).Subrouter()
@@ -23,7 +24,8 @@ func InitRouter(h *handlers.Handlers, jwtManager jwt.TokenManager) *mux.Router {
 
 	me := protected.PathPrefix("/me").Subrouter()
 	me.HandleFunc("/profile", h.GetUserByMe).Methods("GET")
-
+	me.HandleFunc("/logout", h.Logout).Methods("POST")
+	
 	// ADMIN
 	admin := protected.PathPrefix("/admin").Subrouter()
 	admin.Use(middleware.RoleMiddleware("admin"))
@@ -40,7 +42,6 @@ func InitRouter(h *handlers.Handlers, jwtManager jwt.TokenManager) *mux.Router {
 
 	admin.HandleFunc("/categories/{type_index}", h.GetCategoriesByTypeID).Methods("GET")
 	admin.HandleFunc("/items/{id}", h.DeleteTechByID).Methods("DELETE")
-
 
 	admin.HandleFunc("/items/tech", h.CreateTech).Methods("POST")
 	admin.HandleFunc("/items/tech", h.GetAllTech).Methods("GET")

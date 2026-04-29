@@ -1,4 +1,3 @@
-import EntitiesLayout from "@shared/layouts/entietiesLayout/ui/EntitiesLayout";
 import styles from "./StorageUnit.module.scss";
 import StorageForm from "@widgets/Storages/StorageForm/StorageForm";
 import { useParams } from "react-router-dom";
@@ -6,21 +5,21 @@ import type { StorageType } from "@entities/Storages/types/storages.type";
 import type { FC } from "react";
 import { useGetStorageByIdQuery } from "@app/api/storage/storageAPI";
 import ResourcesSearch from "@widgets/Resources/ResourcesSearch/ResourcesSearch";
+import { StorageLayout } from "@shared/layouts/entietiesLayout/ui/EntitiesLayout";
 
 export default function StorageUnit() {
 	const { id } = useParams();
-	const { data, isLoading, isSuccess } = useGetStorageByIdQuery(id as string);
-
-	console.log(data);
+	const { data } = useGetStorageByIdQuery(id as string);
 
 	const storage = data?.data;
 
+	if (!storage) return null;
+
 	return (
 		<div className={styles.page}>
-			<EntitiesLayout
-				treeLink={`/tree/${storage?.id}`}
-				title={storage?.storageName}
-				subTitle={`Хранилище / ${storage?.city}`}
+			<StorageLayout
+				title={storage.storageName}
+				subTitle={`Хранилище / ${storage.city}`}
 				form={
 					<StorageForm
 						storage={storage}
@@ -36,7 +35,7 @@ export default function StorageUnit() {
 				<h2>Ресурсы на хранении</h2>
 				<ResourcesSearch
 					callPlace="storage"
-					name={storage?.storageName}
+					name={storage.storageName}
 				/>
 			</div>
 		</div>

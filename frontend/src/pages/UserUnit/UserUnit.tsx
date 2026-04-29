@@ -1,31 +1,54 @@
 import { useParams } from "react-router-dom";
 import styles from "./UserUnit.module.scss";
-import { useGetUserByIdQuery } from "@app/api/users/usersAPI";
+import {
+	useGetMeByIdQuery,
+	useGetUserByIdQuery,
+} from "@app/api/users/usersAPI";
 
-import EntitiesLayout from "@shared/layouts/entietiesLayout/ui/EntitiesLayout";
+import { UserLayout } from "@shared/layouts/entietiesLayout/ui/EntitiesLayout";
 import UserForm from "@widgets/Resources/ObjectsForm/ObjectForm/UserForm";
 import ResourcesPanel from "@widgets/Resources/ResourcesSearch/ResourcesSearch";
 
-export default function UserUnit() {
+type Props = {
+	callPlace?: "user" | "me";
+};
+
+export default function UserUnit({ callPlace = "user" }: Props) {
 	const { id } = useParams<{ id: string }>();
 
-	const { data: user } = useGetUserByIdQuery(id || "");
+	const isMe = callPlace === "me";
 
-	if (!user) return null;
+	const { data: userData } = useGetUserByIdQuery(id || "", {
+		skip: isMe,
+	});
+
+	const { data: meData } = useGetMeByIdQuery(undefined, {
+		skip: !isMe,
+	});
+
+	const data = isMe ? meData : userData;
+
+	if (!data) return null;
+
+	const user = data.data;
 
 	return (
 		<div className={styles.page}>
-			<EntitiesLayout
-				treeLink={`/tree/${user.data.id}`}
-				title={`${user.data.name} ${user.data.lastname}`}
-				subTitle={user.data.email}
-				form={<UserForm object={user.data} mode="save" />}
-				entitie={user.data}
+			<UserLayout
+				title={
+					isMe
+						? `Ваш профиль: ${user.name} ${user.lastname}`
+						: `${user.name} ${user.lastname}`
+				}
+				subTitle={user.email}
+				form={<UserForm object={user} mode="save" />}
+				entitie={user}
+				isMe={isMe}
 			/>
 
 			<div className={styles.page__resources}>
 				<h2>Ресурсы в пользовании</h2>
-				<ResourcesPanel callPlace="worker" name={user?.data?.email} />
+				<ResourcesPanel callPlace="worker" name={user.email} />
 			</div>
 		</div>
 	);

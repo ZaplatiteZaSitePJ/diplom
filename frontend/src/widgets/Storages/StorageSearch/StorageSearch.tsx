@@ -8,6 +8,7 @@ import type { StorageType } from "@entities/Storages/types/storages.type";
 
 type StorageSearchProps = {
 	mode?: "search" | "replace";
+	isFull?: boolean;
 	storage?: StorageType;
 	onSelect?: (storage: StorageType) => void;
 };
@@ -16,6 +17,7 @@ const StorageSearch: FC<StorageSearchProps> = ({
 	mode = "search",
 	storage,
 	onSelect,
+	isFull = false,
 }) => {
 	const { register, watch, reset } = useForm<SearchCriteria>();
 
@@ -62,6 +64,7 @@ const StorageSearch: FC<StorageSearchProps> = ({
 					occupied_cells={storage?.occupied_cells}
 					mode={mode}
 					onSelect={onSelect}
+					isFull={isFull}
 				/>
 			</div>
 		</div>

@@ -18,9 +18,13 @@ export default function LoginForm() {
 	const onLogin = async () => {
 		try {
 			const { data } = await trigger(getValues());
-			localStorage.setItem("access", data?.data?.access || "");
-			reset();
-			navigate("/storages", { replace: true });
+			const access = data?.data?.access;
+			if (access) {
+				console.log(access);
+				localStorage.setItem("access", access);
+				reset();
+				navigate("/storages", { replace: true });
+			}
 		} catch {
 			console.log("Ошибка");
 		}

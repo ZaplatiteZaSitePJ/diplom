@@ -5,7 +5,7 @@ import { useLazyGetTechByIdQuery } from "@app/api/items/tech/techAPI";
 import { useLazyGetDocsByIdQuery } from "@app/api/items/docs/docsAPI";
 import { useLazyGetSoftwareByIdQuery } from "@app/api/items/software/softwareAPI";
 
-import EntitiesLayout from "@shared/layouts/entietiesLayout/ui/EntitiesLayout";
+import { ResourcesLayout } from "@shared/layouts/entietiesLayout/ui/EntitiesLayout";
 
 import TechForm from "@widgets/Resources/ObjectsForm/ObjectForm/TechForm";
 import DocsForm from "@widgets/Resources/ObjectsForm/ObjectForm/DocsForm";
@@ -21,58 +21,53 @@ export default function ItemUnit() {
 	const [triggerSoftware, { data: software }] = useLazyGetSoftwareByIdQuery();
 
 	useEffect(() => {
-		if (!id) return;
+		if (!id || !type) return;
 
-		if (type === "tech") {
-			triggerTech(id);
-		}
-
-		if (type === "docs") {
-			triggerDocs(id);
-		}
-
-		if (type === "software") {
-			triggerSoftware(id);
-		}
+		if (type === "tech") triggerTech(id);
+		if (type === "docs") triggerDocs(id);
+		if (type === "software") triggerSoftware(id);
 	}, [id, type, triggerTech, triggerDocs, triggerSoftware]);
 
 	if (!type) return null;
 
-	// TECH
+	// 🔧 TECH
 	if (type === "tech" && tech) {
+		const item = tech.data;
+
 		return (
-			<EntitiesLayout
-				treeLink={`/tree/${tech.data.id}`}
-				title={tech.data.universal_name}
-				subTitle={tech.data.id}
-				form={<TechForm object={tech.data} mode="save" />}
-				entitie={tech.data}
+			<ResourcesLayout
+				title={item.universal_name}
+				subTitle={item.id}
+				form={<TechForm object={item} mode="save" />}
+				entitie={item}
 			/>
 		);
 	}
 
-	// DOCS
+	// 📄 DOCS
 	if (type === "docs" && docs) {
+		const item = docs.data;
+
 		return (
-			<EntitiesLayout
-				treeLink={`/tree/${docs.data.id}`}
-				title={docs.data.universal_name}
-				subTitle={docs.data.id}
-				form={<DocsForm object={docs.data} mode="save" />}
-				entitie={docs.data}
+			<ResourcesLayout
+				title={item.universal_name}
+				subTitle={item.id}
+				form={<DocsForm object={item} mode="save" />}
+				entitie={item}
 			/>
 		);
 	}
 
-	// SOFTWARE
+	// 💻 SOFTWARE
 	if (type === "software" && software) {
+		const item = software.data;
+
 		return (
-			<EntitiesLayout
-				treeLink={`/tree/${software.data.id}`}
-				title={software.data.universal_name}
-				subTitle={software.data.id}
-				form={<SoftwareForm object={software.data} mode="save" />}
-				entitie={software.data}
+			<ResourcesLayout
+				title={item.universal_name}
+				subTitle={item.id}
+				form={<SoftwareForm object={item} mode="save" />}
+				entitie={item}
 			/>
 		);
 	}

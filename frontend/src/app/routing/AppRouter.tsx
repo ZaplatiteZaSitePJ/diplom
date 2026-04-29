@@ -1,3 +1,4 @@
+import Actual from "@pages/actual/Actual";
 import Auth from "@pages/auth/Auth";
 // import Storages from "@pages/storages/ui/Storages";
 // import StorageUnit from "@pages/storageUnit/StorageUnit";
@@ -9,7 +10,7 @@ import Storages from "@pages/storages/Storages";
 import StorageUnit from "@pages/storagesUnit/StorageUnit";
 import UserUnit from "@pages/UserUnit/UserUnit";
 import MainLayout from "@shared/layouts/MainLayout";
-import type { JSX } from "react";
+// import type { JSX } from "react";
 // import MainLayout from "@shared/ui/layouts/MainLayout";
 import {
 	createBrowserRouter,
@@ -46,7 +47,6 @@ const router = createBrowserRouter(
 		<Route element={<Outlet />}>
 			<Route element={<ProtectedLayout />}>
 				<Route path="/" element={<MainLayout />}>
-					{/* 👉 ВОТ ЭТО ДОБАВЛЯЕМ */}
 					<Route index element={<Navigate to="items" replace />} />
 
 					<Route path="items" element={<Categories />} />
@@ -60,6 +60,14 @@ const router = createBrowserRouter(
 					<Route path="personal">
 						<Route index element={<Personal />} />
 						<Route path=":id" element={<UserUnit />} />
+					</Route>
+
+					<Route path="profile">
+						<Route index element={<UserUnit callPlace="me" />} />
+					</Route>
+
+					<Route path="actual">
+						<Route index element={<Actual />} />
 					</Route>
 				</Route>
 			</Route>

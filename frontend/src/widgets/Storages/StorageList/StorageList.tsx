@@ -11,6 +11,7 @@ type StorageListProps = {
 	occupied_cells?: number;
 	mode?: "search" | "replace";
 	onSelect?: (storage: StorageType) => void;
+	isFull?: boolean;
 };
 
 const StorageList: FC<StorageListProps> = ({
@@ -19,6 +20,7 @@ const StorageList: FC<StorageListProps> = ({
 	occupied_cells,
 	mode,
 	onSelect,
+	isFull = false,
 }) => {
 	const { data, isLoading } = useGetStoragesQuery();
 	console.log(data);
@@ -28,6 +30,7 @@ const StorageList: FC<StorageListProps> = ({
 		city,
 		data?.data || [],
 		occupied_cells,
+		isFull,
 	);
 	return (
 		<div className={styles.storageList}>

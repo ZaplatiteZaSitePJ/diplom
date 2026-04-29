@@ -5,16 +5,24 @@ import { useState, type FC } from "react";
 import cn from "classnames";
 import ObjectList from "../ObjectList/TechList";
 import type { TechFilter, TechItem } from "@entities/Objects/types/tech.type";
-import type { TransferStatus } from "@entities/Objects/types/baseObjects.type";
+import type {
+	QualityStatus,
+	TransferStatus,
+} from "@entities/Objects/types/baseObjects.type";
 import TransferSelect from "@features/formElements/ui/TransferSelect";
 import QualitySelect from "@features/formElements/ui/QualitySelect";
 
 type ResourcesProps = {
 	callPlace?: Extract<TransferStatus, "worker" | "storage">;
 	name?: string;
+	isBroken?: boolean;
 };
 
-const TechSearch: FC<ResourcesProps> = ({ callPlace, name }) => {
+const TechSearch: FC<ResourcesProps> = ({
+	callPlace,
+	name,
+	isBroken = undefined,
+}) => {
 	const { register, watch } = useForm<Partial<TechItem>>();
 
 	const [isWrapped, setWrapped] = useState<boolean>(false);
@@ -111,7 +119,11 @@ const TechSearch: FC<ResourcesProps> = ({ callPlace, name }) => {
 						isAvailable={callPlace == "worker" ? false : true}
 					/>
 
-					<QualitySelect register={register("quality_status")} />
+					<QualitySelect
+						register={register("quality_status")}
+						isAvailable={isBroken ? false : true}
+						defaultValue={isBroken ? "faulty" : undefined}
+					/>
 
 					<Input
 						label="Категория"

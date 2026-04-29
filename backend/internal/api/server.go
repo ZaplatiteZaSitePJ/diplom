@@ -63,7 +63,7 @@ func (a *API) Start() error {
 	userService := user.New(userRepo)
 
 	authRepo := repositories.NewAuthRepository(storage.GetDB())
-	authService := auth.New(authRepo, jwtManager)
+	authService := auth.New(authRepo, userService, jwtManager)
 
 	storageRepo := repositories.NewStorageRepository(storage.GetDB())
 	storageService := storages.New(storageRepo)

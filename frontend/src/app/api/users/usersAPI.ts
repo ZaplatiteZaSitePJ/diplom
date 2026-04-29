@@ -28,6 +28,17 @@ export const storageApi = baseApi.injectEndpoints({
 		}),
 
 		// =========================
+		// GET ME
+		// =========================
+		getMeById: builder.query<UserResponse, undefined>({
+			query: () => ({
+				url: `/me/profile`,
+				method: "GET",
+			}),
+			providesTags: ["User"],
+		}),
+
+		// =========================
 		// CREATE
 		// =========================
 		createUser: builder.mutation<UserResponse, Partial<UserType>>({
@@ -77,4 +88,5 @@ export const {
 	useCreateUserMutation,
 	useUpdateUserMutation,
 	useDeleteUserMutation,
+	useGetMeByIdQuery,
 } = storageApi;
