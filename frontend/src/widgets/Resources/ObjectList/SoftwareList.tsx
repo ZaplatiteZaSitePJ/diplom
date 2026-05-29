@@ -1,12 +1,33 @@
-import { useGetSoftwaresQuery } from "@app/api/items/software/softwareAPI";
+import {
+	useGetMySoftwaresQuery,
+	useGetSoftwaresQuery,
+} from "@app/api/items/software/softwareAPI";
 import styles from "./ObjectList.module.scss";
 import { makeLightID } from "@entities/Objects/types/baseObjects.type";
-import type { SoftwareFilter } from "@entities/Objects/types/software.type";
+import type {
+	SoftwareFilter,
+	SoftwareItemPublic,
+} from "@entities/Objects/types/software.type";
 import { useNavigate } from "react-router-dom";
 
-const SoftwareList = ({ filter }: { filter: SoftwareFilter }) => {
-	const { data: items } = useGetSoftwaresQuery(filter);
+const SoftwareList = ({
+	filter,
+	isMe,
+}: {
+	filter: SoftwareFilter;
+	isMe?: boolean;
+}) => {
 	const navigate = useNavigate();
+
+	const { data: allItems } = useGetSoftwaresQuery(filter, {
+		skip: isMe,
+	});
+
+	const { data: myItems } = useGetMySoftwaresQuery(undefined, {
+		skip: !isMe,
+	});
+
+	const items = isMe ? myItems : allItems;
 
 	return (
 		<div className={styles.objectList}>
@@ -23,7 +44,7 @@ const SoftwareList = ({ filter }: { filter: SoftwareFilter }) => {
 					</thead>
 
 					<tbody>
-						{items.data.map((el) => (
+						{items.data.map((el: SoftwareItemPublic) => (
 							<tr
 								key={el.id}
 								onClick={() =>

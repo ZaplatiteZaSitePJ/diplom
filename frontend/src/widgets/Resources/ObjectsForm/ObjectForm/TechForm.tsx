@@ -13,6 +13,7 @@ import { techDataForPush } from "./dataForPush";
 import TransferSelect from "@features/formElements/ui/TransferSelect";
 import QualitySelect from "@features/formElements/ui/QualitySelect";
 import CategorySelect from "@features/formElements/ui/CategorySelect";
+import { enqueueSnackbar } from "notistack";
 
 type TechFormProps = {
 	object?: TechItem;
@@ -43,21 +44,53 @@ const TechForm: FC<TechFormProps> = ({
 
 	const submitHandler: SubmitHandler<TechItem> = async (data) => {
 		const formattedData = techDataForPush(data);
-		console.log(formattedData);
 		const id = formattedData.id;
 
 		try {
-			if (mode == "create") {
-				await triggerPost(formattedData);
+			if (mode === "create") {
+				await triggerPost(formattedData).unwrap();
+
+				enqueueSnackbar(
+					`Объект ${formattedData.brand} ${formattedData.model} (${id}) успешно создан`,
+					{
+						variant: "success",
+						autoHideDuration: 5000,
+					},
+				);
 			}
 
-			if (mode == "save") {
-				await triggerPatch({ id: id, body: formattedData });
+			if (mode === "save") {
+				await triggerPatch({
+					id,
+					body: formattedData,
+				}).unwrap();
+
+				enqueueSnackbar(
+					`Объект ${formattedData.brand} ${formattedData.model} (${id}) успешно обновлен`,
+					{
+						variant: "success",
+						autoHideDuration: 5000,
+					},
+				);
 			}
 
 			setReadOnly?.();
-		} catch {
-			console.log("не отправилось");
+		} catch (err: any) {
+			console.error(err);
+
+			if (err?.status === 400 || err?.status === 422) {
+				enqueueSnackbar("Ошибка! Введены некорректные данные", {
+					variant: "error",
+					autoHideDuration: 7000,
+				});
+
+				return;
+			}
+
+			enqueueSnackbar("Ошибка! Попробуйте позже", {
+				variant: "error",
+				autoHideDuration: 7000,
+			});
 		}
 	};
 

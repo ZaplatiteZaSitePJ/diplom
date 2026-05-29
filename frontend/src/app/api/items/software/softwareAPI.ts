@@ -22,6 +22,13 @@ export const softwareApi = baseApi.injectEndpoints({
 			providesTags: ["Software"],
 		}),
 
+		getMySoftwares: builder.query({
+			query: () => ({
+				url: "/me/items/software",
+				method: "GET",
+			}),
+		}),
+
 		// GET BY ID
 		getSoftwareById: builder.query<SoftwareResponse, string>({
 			query: (id) => `/admin/items/software/${id}`,
@@ -71,4 +78,5 @@ export const {
 	useCreateSoftwareMutation,
 	useDeleteSoftwareMutation,
 	useUpdateSoftwareMutation,
+	useGetMySoftwaresQuery,
 } = softwareApi;

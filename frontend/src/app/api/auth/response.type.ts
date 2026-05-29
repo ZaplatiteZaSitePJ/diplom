@@ -2,7 +2,7 @@ import type { Response } from "../response.type";
 
 type TokkensData = {
 	access: string;
-	refresh: string;
+	role: "admin" | "user";
 };
 
 export type authResponse = Response & {

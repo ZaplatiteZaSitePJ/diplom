@@ -10,6 +10,7 @@ import Storages from "@pages/storages/Storages";
 import StorageUnit from "@pages/storagesUnit/StorageUnit";
 import UserUnit from "@pages/UserUnit/UserUnit";
 import MainLayout from "@shared/layouts/MainLayout";
+import type React from "react";
 // import type { JSX } from "react";
 // import MainLayout from "@shared/ui/layouts/MainLayout";
 import {
@@ -22,7 +23,18 @@ import {
 	Route,
 } from "react-router-dom";
 
-const ProtectedLayout = () => {
+const AdminLayout = () => {
+	const token = localStorage.getItem("access");
+	const role = localStorage.getItem("role");
+
+	if (!token || role !== "admin") {
+		return <Navigate to="/auth" replace />;
+	}
+
+	return <Outlet />;
+};
+
+const UserLayout = () => {
 	const token = localStorage.getItem("access");
 
 	if (!token) {
@@ -32,11 +44,12 @@ const ProtectedLayout = () => {
 	return <Outlet />;
 };
 
-const UnauthOnly = ({ children }: { children: JSX.Element }) => {
+const UnauthOnly = ({ children }: { children: React.ReactElement }) => {
 	const token = localStorage.getItem("access");
+	const role = localStorage.getItem("role");
 
-	if (token) {
-		return <Navigate to="/" replace />;
+	if (token && role) {
+		return <Navigate to="/profile" replace />;
 	}
 
 	return children;
@@ -45,7 +58,7 @@ const UnauthOnly = ({ children }: { children: JSX.Element }) => {
 const router = createBrowserRouter(
 	createRoutesFromElements(
 		<Route element={<Outlet />}>
-			<Route element={<ProtectedLayout />}>
+			<Route element={<AdminLayout />}>
 				<Route path="/" element={<MainLayout />}>
 					<Route index element={<Navigate to="items" replace />} />
 
@@ -62,12 +75,16 @@ const router = createBrowserRouter(
 						<Route path=":id" element={<UserUnit />} />
 					</Route>
 
-					<Route path="profile">
-						<Route index element={<UserUnit callPlace="me" />} />
-					</Route>
-
 					<Route path="actual">
 						<Route index element={<Actual />} />
+					</Route>
+				</Route>
+			</Route>
+
+			<Route element={<UserLayout />}>
+				<Route path="/" element={<MainLayout />}>
+					<Route path="/profile">
+						<Route index element={<UserUnit callPlace="me" />} />
 					</Route>
 				</Route>
 			</Route>

@@ -33,6 +33,7 @@ type TechFilter struct {
 	Category      *string `json:"category"`
 	QualityStatus *string `json:"quality_status"`
 	TransferStatus *string `json:"transfer_status"`
+	UserID         *uuid.UUID 
 }
 
 type SoftwareItemPublic struct {
@@ -62,7 +63,10 @@ type SoftwareFilter struct {
 	PurchasePrice     *float64 `json:"purchase_price"`
 
 	TransferStatus    *string  `json:"transfer_status"`   
-	LastStorage       *string  `json:"last_storage"`      
+	LastStorage       *string  `json:"last_storage"`
+	
+	ExpiredAt         *string `json:"expired_at"`
+	UserID         *uuid.UUID 
 }
 
 type DocsItemPublic struct {
@@ -88,5 +92,7 @@ type DocsFilter struct {
 	LastStorage    *string    `json:"last_storage,omitempty"`
 	Category       *string    `json:"category,omitempty"`
 	TransferStatus *string    `json:"transfer_status,omitempty"`
+	ResponsibleWorkerEmail *string `json:"responsible_worker_email,omitempty"`
+	UserID         *uuid.UUID 
 }
 

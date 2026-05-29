@@ -12,6 +12,7 @@ import {
 	useCreateSoftwareMutation,
 	useUpdateSoftwareMutation,
 } from "@app/api/items/software/softwareAPI";
+import { enqueueSnackbar } from "notistack";
 
 type SoftwareFormProps = {
 	object?: SoftwareItemPublic;
@@ -43,22 +44,55 @@ const SoftwareForm: FC<SoftwareFormProps> = ({
 
 	const submitHandler: SubmitHandler<SoftwareItemPublic> = async (data) => {
 		const formatted = softwareDataForPush(data);
+		const id = formatted.id;
 
 		try {
 			if (mode === "create") {
-				await triggerPost(formatted);
+				await triggerPost(formatted).unwrap();
+
+				enqueueSnackbar(
+					`${formatted.vendor} ${formatted.title} (${id}) успешно создано`,
+					{
+						variant: "success",
+						autoHideDuration: 5000,
+					},
+				);
 			}
 
 			if (mode === "save") {
-				await triggerPatch({ id: formatted.id, body: formatted });
+				await triggerPatch({
+					id,
+					body: formatted,
+				}).unwrap();
+
+				enqueueSnackbar(
+					`${formatted.vendor} ${formatted.title} (${id}) успешно обновлено`,
+					{
+						variant: "success",
+						autoHideDuration: 5000,
+					},
+				);
 			}
 
 			setReadOnly?.();
-		} catch {
-			console.log("не отправилось software");
+		} catch (err: any) {
+			console.error(err);
+
+			if (err?.status === 400 || err?.status === 422) {
+				enqueueSnackbar("Ошибка! Введены некорректные данные", {
+					variant: "error",
+					autoHideDuration: 7000,
+				});
+
+				return;
+			}
+
+			enqueueSnackbar("Ошибка! Попробуйте позже", {
+				variant: "error",
+				autoHideDuration: 7000,
+			});
 		}
 	};
-
 	return (
 		<form
 			className={styles.objectForm}

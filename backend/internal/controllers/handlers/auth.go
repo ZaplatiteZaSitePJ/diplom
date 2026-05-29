@@ -18,7 +18,7 @@ func (h *Handlers) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	access, refresh, err := h.Auth.Login(req.Email, req.Password)
+	access, refresh, role, err := h.Auth.Login(req.Email, req.Password)
 	if err != nil {
 		response_message.WrapperResponseJSON(w, 401, "invalid credentials")
 		return
@@ -28,7 +28,7 @@ func (h *Handlers) Login(w http.ResponseWriter, r *http.Request) {
 		Name:     "refresh_token",
 		Value:    refresh,
 		HttpOnly: true,
-		Secure:   true, 
+		Secure:   true,
 		Path:     "/",
 		MaxAge:   7 * 24 * 3600,
 		SameSite: http.SameSiteStrictMode,
@@ -36,6 +36,7 @@ func (h *Handlers) Login(w http.ResponseWriter, r *http.Request) {
 
 	response_message.WrapperResponseJSON(w, 200, map[string]string{
 		"access": access,
+		"role":   role,
 	})
 }
 
@@ -46,7 +47,7 @@ func (h *Handlers) Refresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	access, newRefresh, err := h.Auth.Refresh(cookie.Value)
+	access, newRefresh, role, err := h.Auth.Refresh(cookie.Value)
 	if err != nil {
 		response_message.WrapperResponseJSON(w, 401, "invalid refresh token")
 		return
@@ -64,6 +65,7 @@ func (h *Handlers) Refresh(w http.ResponseWriter, r *http.Request) {
 
 	response_message.WrapperResponseJSON(w, 200, map[string]string{
 		"access": access,
+		"role":   role,
 	})
 }
 

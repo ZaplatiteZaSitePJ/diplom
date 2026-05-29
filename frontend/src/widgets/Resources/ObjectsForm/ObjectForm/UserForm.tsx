@@ -7,6 +7,7 @@ import {
 	useCreateUserMutation,
 	useUpdateUserMutation,
 } from "@app/api/users/usersAPI";
+import { enqueueSnackbar } from "notistack";
 
 type UserFormProps = {
 	object?: UserType;
@@ -33,22 +34,62 @@ const UserForm: FC<UserFormProps> = ({
 	}, [object, reset]);
 
 	const submitHandler: SubmitHandler<UserType> = async (data) => {
-		console.log(data);
-
 		const id = data.id;
 
 		try {
 			if (mode === "create") {
-				await triggerPost(data);
+				await triggerPost(data).unwrap();
+
+				enqueueSnackbar(
+					`Пользователь ${data.lastname} ${data.name} (${id}) успешно создан`,
+					{
+						variant: "success",
+						autoHideDuration: 5000,
+					},
+				);
 			}
 
 			if (mode === "save") {
-				await triggerPatch({ id, body: data });
+				await triggerPatch({
+					id,
+					body: data,
+				}).unwrap();
+
+				enqueueSnackbar(
+					`Пользователь ${data.lastname} ${data.name} (${id}) успешно обновлен`,
+					{
+						variant: "success",
+						autoHideDuration: 5000,
+					},
+				);
 			}
 
 			setReadOnly?.();
-		} catch {
-			console.log("не отправилось");
+		} catch (err: any) {
+			console.error(err);
+
+			if (err?.status === 400) {
+				enqueueSnackbar("Ошибка! Введены некорректные данные", {
+					variant: "error",
+					autoHideDuration: 7000,
+				});
+
+				return;
+			}
+
+			if (err?.status === 409) {
+				enqueueSnackbar("Ошибка! Пользователь уже существует", {
+					variant: "error",
+					autoHideDuration: 7000,
+				});
+
+				return;
+			}
+
+			enqueueSnackbar("Ошибка! Попробуйте позже", {
+				variant: "error",
+				autoHideDuration: 7000,
+			});
 		}
 	};
 

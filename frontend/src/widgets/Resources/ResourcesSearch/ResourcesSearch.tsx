@@ -13,7 +13,7 @@ import DocsForm from "../ObjectsForm/ObjectForm/DocsForm";
 import SoftwareForm from "../ObjectsForm/ObjectForm/SoftwareForm";
 
 type ResourcesSearchProps = {
-	callPlace?: Extract<TransferStatus, "worker" | "storage">;
+	callPlace?: Extract<TransferStatus, "worker" | "storage"> | "me";
 	mode?: "search" | "create";
 	name?: string;
 };
@@ -26,16 +26,44 @@ const ResourcesPanel: FC<ResourcesSearchProps> = ({
 	const [currentCategorie, setCurrentCategorie] =
 		useState<CategoriesList>("Техника");
 
+	// 🔥 формируем constFilter ОДИН раз
+	const constFilter = {
+		last_worker_email: callPlace === "worker" ? name : undefined,
+		last_worker: callPlace === "worker" ? name : undefined,
+		last_storage: callPlace === "storage" ? name : undefined,
+		transfer_status:
+			callPlace === "worker"
+				? "worker"
+				: callPlace === "storage"
+					? "storage"
+					: undefined,
+	};
+
 	const renderSearch = () => {
 		switch (currentCategorie) {
 			case "Техника":
-				return <TechSearch callPlace={callPlace} name={name} />;
+				return (
+					<TechSearch
+						constFilter={constFilter}
+						isMe={callPlace === "me"}
+					/>
+				);
 
 			case "Документы":
-				return <DocsSearch />;
+				return (
+					<DocsSearch
+						constFilter={constFilter}
+						isMe={callPlace === "me"}
+					/>
+				);
 
 			case "Программное обеспечение":
-				return <SoftwareSearch />;
+				return (
+					<SoftwareSearch
+						constFilter={constFilter}
+						isMe={callPlace === "me"}
+					/>
+				);
 
 			default:
 				return null;
@@ -65,8 +93,8 @@ const ResourcesPanel: FC<ResourcesSearchProps> = ({
 				setCurrentCategorie={setCurrentCategorie}
 			/>
 
-			{mode == "search" && renderSearch()}
-			{mode == "create" && renderCreate()}
+			{mode === "search" && renderSearch()}
+			{mode === "create" && renderCreate()}
 		</>
 	);
 };

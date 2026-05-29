@@ -4,6 +4,7 @@ import { ButtonText } from "@shared/ui/ui-kit";
 import { useNavigate } from "react-router-dom";
 import type { BaseObjectType } from "@entities/Objects/types/baseObjects.type";
 import { useDeleteTechMutation } from "@app/api/items/tech/techAPI";
+import { enqueueSnackbar } from "notistack";
 
 type ObjectDeleteModalProps = {
 	object: BaseObjectType;
@@ -19,10 +20,23 @@ const ItemDeleteModal: FC<ObjectDeleteModalProps> = ({
 
 	const handleDelete = async () => {
 		try {
-			await triggerDelete(object.id as string);
+			await triggerDelete(object.id as string).unwrap();
+			enqueueSnackbar(`Объект ${object.id} Успешно удален!`, {
+				variant: "success",
+				autoHideDuration: 5000,
+			});
 			navigate(-1);
-		} catch (error) {
-			console.log(error);
+		} catch (error: any) {
+			if (error?.status === "FETCH_ERROR") {
+				enqueueSnackbar(
+					`Ошибка! Объект ${object.id} не удалось удалить. Попробуйте позже.`,
+					{
+						variant: "error",
+						autoHideDuration: 5000,
+					},
+				);
+				console.log(error);
+			}
 		}
 	};
 	return (

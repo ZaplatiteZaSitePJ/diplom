@@ -20,6 +20,13 @@ export const techApi = baseApi.injectEndpoints({
 			providesTags: ["Tech"],
 		}),
 
+		getMyTechs: builder.query({
+			query: () => ({
+				url: "/me/items/tech",
+				method: "GET",
+			}),
+		}),
+
 		// GET BY ID
 		getTechById: builder.query<TechResponse, string>({
 			query: (id) => `/admin/items/tech/${id}`,
@@ -66,6 +73,7 @@ export const techApi = baseApi.injectEndpoints({
 
 export const {
 	useGetTechsQuery,
+	useGetMyTechsQuery,
 	useLazyGetTechByIdQuery,
 	useCreateTechMutation,
 	useDeleteTechMutation,

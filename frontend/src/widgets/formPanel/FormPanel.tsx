@@ -10,13 +10,16 @@ import cn from "classnames";
 
 type FormPanelProps = {
 	children: ReactNode;
+	readOnlyProp?: boolean;
 };
 
-const FormPanel: FC<FormPanelProps> = ({ children }) => {
+const FormPanel: FC<FormPanelProps> = ({ children, readOnlyProp }) => {
 	const [isReadOnly, setIsReadOnly] = useState<boolean>(true);
 
 	const switchMode = (mode: boolean) => {
-		setIsReadOnly(mode);
+		if (!readOnlyProp) {
+			setIsReadOnly(mode);
+		}
 	};
 
 	return (
@@ -32,16 +35,21 @@ const FormPanel: FC<FormPanelProps> = ({ children }) => {
 					>
 						чтение
 					</button>
-					<span>/</span>
-					<button
-						type="button"
-						onClick={() => switchMode(false)}
-						className={cn({
-							[styles.active]: !isReadOnly,
-						})}
-					>
-						изменение
-					</button>
+
+					{!readOnlyProp && (
+						<>
+							<span>/</span>
+							<button
+								type="button"
+								onClick={() => switchMode(false)}
+								className={cn({
+									[styles.active]: !isReadOnly,
+								})}
+							>
+								изменение
+							</button>
+						</>
+					)}
 				</div>
 			</div>
 			<div className={styles.formPanel__formPlace}>

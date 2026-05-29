@@ -44,11 +44,15 @@ export default function UserUnit({ callPlace = "user" }: Props) {
 				form={<UserForm object={user} mode="save" />}
 				entitie={user}
 				isMe={isMe}
+				readOnly
 			/>
 
 			<div className={styles.page__resources}>
 				<h2>Ресурсы в пользовании</h2>
-				<ResourcesPanel callPlace="worker" name={user.email} />
+				<ResourcesPanel
+					callPlace={callPlace === "user" ? "worker" : "me"}
+					name={user.email}
+				/>
 			</div>
 		</div>
 	);

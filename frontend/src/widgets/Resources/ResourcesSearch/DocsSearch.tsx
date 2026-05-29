@@ -4,51 +4,43 @@ import { Input } from "@shared/ui/ui-kit";
 import { useState, type FC } from "react";
 import cn from "classnames";
 import ObjectList from "../ObjectList/DocsList";
-import type { TransferStatus } from "@entities/Objects/types/baseObjects.type";
 import TransferSelect from "@features/formElements/ui/TransferSelect";
+
 import type { DocsFilter, DocsItem } from "@entities/Objects/types/docs.type";
 
-type ResourcesProps = {
-	callPlace?: Extract<TransferStatus, "worker" | "storage">;
-	name?: string;
+type Props = {
+	constFilter?: Partial<DocsFilter>;
+	isMe?: boolean;
 };
 
-const DocsSearch: FC<ResourcesProps> = ({ callPlace, name }) => {
+const DocsSearch: FC<Props> = ({ constFilter = {}, isMe }) => {
 	const { register, watch } = useForm<Partial<DocsItem>>();
-
-	const [isWrapped, setWrapped] = useState<boolean>(false);
+	const [isWrapped, setWrapped] = useState(false);
 
 	const handleWrap = () => {
 		setWrapped((prev) => !prev);
 	};
 
-	const rawValues = watch();
+	const raw = watch();
+
+	const isLocked = (field: keyof DocsFilter) =>
+		constFilter[field] !== undefined;
 
 	const filter: DocsFilter = {
-		id: rawValues.id ?? undefined,
-		doc_number: rawValues.doc_number ?? undefined,
+		id: constFilter.id ?? raw.id ?? undefined,
+		doc_number: constFilter.doc_number ?? raw.doc_number ?? undefined,
+		category: constFilter.category ?? raw.category ?? undefined,
 
-		last_worker_email:
-			callPlace === "worker"
-				? name
-				: (rawValues.last_worker_email ?? undefined),
-
-		last_storage:
-			callPlace === "storage"
-				? name
-				: (rawValues.last_storage ?? undefined),
-
-		category: rawValues.category ?? undefined,
+		last_storage: constFilter.last_storage ?? raw.last_storage ?? undefined,
 
 		transfer_status:
-			callPlace === "worker"
-				? "worker"
-				: callPlace === "storage"
-					? "storage"
-					: (rawValues.transfer_status ?? undefined),
-	};
+			constFilter.transfer_status ?? raw.transfer_status ?? undefined,
 
-	console.log("Form changed:", filter);
+		responsible_worker_email:
+			constFilter.last_worker_email ??
+			raw.responsible_worker_email ??
+			undefined,
+	};
 
 	return (
 		<div className={styles.objectFormSearch}>
@@ -69,17 +61,25 @@ const DocsSearch: FC<ResourcesProps> = ({ callPlace, name }) => {
 						label="Артикул"
 						register={register("id")}
 						width="240px"
+						defaultValue={constFilter.id}
+						isAvailable={!isLocked("id")}
 					/>
+
 					<Input
 						label="Категория"
 						register={register("category")}
 						width="240px"
+						defaultValue={constFilter.category}
+						isAvailable={!isLocked("category")}
 					/>
+
 					<Input
 						label="Номер"
 						register={register("doc_number")}
 						width="240px"
 						type="string"
+						defaultValue={constFilter.doc_number}
+						isAvailable={!isLocked("doc_number")}
 					/>
 				</div>
 
@@ -91,14 +91,8 @@ const DocsSearch: FC<ResourcesProps> = ({ callPlace, name }) => {
 				>
 					<TransferSelect
 						register={register("transfer_status")}
-						isAvailable={callPlace ? false : true}
-						defaultValue={
-							callPlace
-								? callPlace == "storage"
-									? "storage"
-									: "worker"
-								: undefined
-						}
+						isAvailable={!isLocked("transfer_status")}
+						defaultValue={constFilter.transfer_status}
 					/>
 
 					<Input
@@ -106,17 +100,17 @@ const DocsSearch: FC<ResourcesProps> = ({ callPlace, name }) => {
 						register={register("last_storage")}
 						width="240px"
 						type="string"
-						value={callPlace == "storage" ? name : undefined}
-						isAvailable={callPlace == "storage" ? false : true}
+						defaultValue={constFilter.last_storage}
+						isAvailable={!isLocked("last_storage")}
 					/>
 
 					<Input
-						label="Последний владелец"
-						register={register("last_worker")}
+						label="Подписант (email)"
+						register={register("responsible_worker_email")}
 						width="240px"
 						type="string"
-						value={callPlace == "worker" ? name : undefined}
-						isAvailable={callPlace == "worker" ? false : true}
+						defaultValue={constFilter.last_worker_email}
+						isAvailable={!isLocked("responsible_worker_email")}
 					/>
 				</div>
 
@@ -125,9 +119,7 @@ const DocsSearch: FC<ResourcesProps> = ({ callPlace, name }) => {
 					style={
 						isWrapped ? { display: "block" } : { display: "none" }
 					}
-				>
-					{" "}
-				</div>
+				/>
 			</form>
 
 			<button
@@ -141,7 +133,7 @@ const DocsSearch: FC<ResourcesProps> = ({ callPlace, name }) => {
 			</button>
 
 			<div className={styles.objectFormSearch__objectListPlace}>
-				<ObjectList filter={filter} />
+				<ObjectList filter={filter} isMe={isMe} />
 			</div>
 		</div>
 	);

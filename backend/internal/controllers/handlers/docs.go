@@ -4,10 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"inno-accounting/internal/controllers/middleware"
 	"inno-accounting/internal/dto"
 	"inno-accounting/pkg/logger"
 	"inno-accounting/pkg/server_utils/app_errors"
 	"inno-accounting/pkg/server_utils/configure_headers"
+	custom_errors "inno-accounting/pkg/server_utils/errors"
 	"inno-accounting/pkg/server_utils/response_message"
 	"net/http"
 
@@ -76,6 +78,9 @@ func (h *Handlers) GetAllDocuments(w http.ResponseWriter, r *http.Request) {
 			response_message.WrapperResponseJSON(w, 400, "invalid uuid format")
 			return
 		}
+	}
+	if v := query.Get("responsible_worker_email"); v != "" {
+		filter.ResponsibleWorkerEmail = &v
 	}
 	if v := query.Get("doc_number"); v != "" {
 		filter.DocNumber = &v
@@ -159,6 +164,37 @@ func (h *Handlers) GetDocumentByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response_message.WrapperResponseJSON(w, 200, doc)
+}
+
+func (h *Handlers) GetMyDocuments(w http.ResponseWriter, r *http.Request) {
+	configure_headers.DefaultHeader(w)
+
+	authData := middleware.GetAuthData(r.Context())
+
+	// 👇 получаем пользователя
+	user, err := h.User.FindUserByID(authData.UserID)
+	if err != nil {
+		custom_errors.ErrorResponse(w, err, logger.GetLoger())
+		return
+	}
+
+	email := user.Email
+
+	filter := &dto.DocsFilter{
+		ResponsibleWorkerEmail: &email, // 👈 вот сюда кладём email
+	}
+
+	docs, err := h.Documents.FindAllDocuments(filter)
+	if err != nil {
+		custom_errors.ErrorResponse(w, err, logger.GetLoger())
+		return
+	}
+
+	if docs == nil {
+		docs = []*dto.DocsItemPublic{}
+	}
+
+	response_message.WrapperResponseJSON(w, 200, docs)
 }
 
 // ===================== PATCH =====================

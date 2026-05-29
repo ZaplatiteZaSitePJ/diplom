@@ -10,6 +10,7 @@ import {
 	useCreateStorageMutation,
 	useUpdateStorageMutation,
 } from "@app/api/storage/storageAPI";
+import { enqueueSnackbar } from "notistack";
 // import postStorage from "@features/api/axios/requests/storages/postStorage";
 // import putStorage from "@features/api/axios/requests/storages/putStorage";
 
@@ -48,29 +49,69 @@ const StorageForm: FC<StorageFormProps> = ({
 	const [trigerUpdate] = useUpdateStorageMutation();
 
 	const onSubmit = async () => {
-		const capacity =
-			Number(storage?.capacity || 0) +
-			Number(getValues("increaseValue")) -
-			Number(getValues("decreaseValue"));
-		if (mode === "create" && handleClose) {
-			await triggerPost({
-				...getValues(),
-				capacity,
-			});
-			handleClose();
-		}
-		if (mode === "save") {
-			if (!storage?.id) return;
+		try {
+			const capacity =
+				Number(storage?.capacity || 0) +
+				Number(getValues("increaseValue")) -
+				Number(getValues("decreaseValue"));
 
-			trigerUpdate({
-				id: storage.id,
-				body: {
+			if (mode === "create" && handleClose) {
+				await triggerPost({
 					...getValues(),
 					capacity,
-				},
+				}).unwrap();
+
+				enqueueSnackbar(
+					`Хранилище ${getValues("storageName")} успешно создано.`,
+					{
+						variant: "success",
+						autoHideDuration: 5000,
+					},
+				);
+
+				handleClose();
+
+				return;
+			}
+
+			if (mode === "save") {
+				if (!storage?.id) return;
+
+				await trigerUpdate({
+					id: storage.id,
+					body: {
+						...getValues(),
+						capacity,
+					},
+				}).unwrap();
+
+				enqueueSnackbar(
+					`Хранилище ${getValues("storageName")} успешно обновлено.`,
+					{
+						variant: "success",
+						autoHideDuration: 5000,
+					},
+				);
+
+				setReadOnly?.();
+				onSaved?.();
+			}
+		} catch (err: any) {
+			console.error(err);
+
+			if (err?.status === 400) {
+				enqueueSnackbar("Ошибка! Введены некорректные данные", {
+					variant: "error",
+					autoHideDuration: 7000,
+				});
+
+				return;
+			}
+
+			enqueueSnackbar("Ошибка! Попробуйте позже", {
+				variant: "error",
+				autoHideDuration: 7000,
 			});
-			setReadOnly?.();
-			onSaved?.();
 		}
 	};
 

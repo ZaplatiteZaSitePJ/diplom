@@ -193,6 +193,28 @@ func (s *DocumentService) ChangeDocumentByID(id uuid.UUID, input *dto.DocsItemPu
 		doc.FullSignedAt = *input.FullSignedAt
 	}
 
+	if input.TransferStatus != nil {
+		doc.TransferStatus = *input.TransferStatus
+	}
+
+	// --- storage
+	if input.LastStorage != nil {
+		storage, err := s.storageService.FindStorageByExactName(*input.LastStorage)
+		if err != nil {
+			return nil, app_errors.Unprocessable("Storage does not exist", err)
+		}
+		doc.LastStorageID = &storage.ID
+	}
+
+	// --- last worker
+	if input.LastWorkerEmail != nil {
+		user, err := s.userService.FindUserByEmail(*input.LastWorkerEmail)
+		if err != nil {
+			return nil, app_errors.Unprocessable("Worker does not exist", err)
+		}
+		doc.LastWorkerID = &user.ID
+	}
+
 	// --- category
 	var categoryName string
 

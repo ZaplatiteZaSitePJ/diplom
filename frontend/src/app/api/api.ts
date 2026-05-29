@@ -1,5 +1,4 @@
 import { fetchBaseQuery } from "@reduxjs/toolkit/query";
-
 import type {
 	BaseQueryFn,
 	FetchArgs,
@@ -44,6 +43,14 @@ const baseQueryWithAuthRedirect: BaseQueryFn<
 	let result = await rawBaseQuery(args, api, extraOptions);
 
 	if (result.error?.status === 401) {
+		const isAuthPage =
+			window.location.pathname.includes("/auth") ||
+			window.location.href.includes("/auth");
+
+		if (isAuthPage) {
+			return result;
+		}
+
 		if (!isRefreshing) {
 			isRefreshing = true;
 
@@ -60,16 +67,17 @@ const baseQueryWithAuthRedirect: BaseQueryFn<
 						const data = res.data as { data: { access: string } };
 
 						localStorage.setItem("access", data.data.access);
-
 						return data;
 					}
 
 					throw new Error("refresh failed");
 				})
 				.catch(() => {
-					// refresh умер → разлогиниваем
 					localStorage.removeItem("access");
-					window.location.href = "/auth";
+
+					if (!isAuthPage) {
+						window.location.href = "/auth";
+					}
 				})
 				.finally(() => {
 					isRefreshing = false;

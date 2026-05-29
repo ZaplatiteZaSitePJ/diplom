@@ -23,4 +23,5 @@ export type SoftwareFilter = {
 	purchase_price?: number;
 	transfer_status?: string;
 	last_storage?: string;
+	expired_at?: string;
 };

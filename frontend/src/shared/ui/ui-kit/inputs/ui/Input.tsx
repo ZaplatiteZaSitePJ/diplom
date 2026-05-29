@@ -84,7 +84,16 @@ const Input: FC<InputProps> = ({
 						...sx,
 					}}
 				/>
-				{subContent}
+				<div
+					style={{
+						fontSize: "var(--small-font-size)",
+						marginTop: "8px",
+						fontWeight: "100",
+						opacity: 1,
+					}}
+				>
+					{subContent}
+				</div>
 			</FormControl>
 		</div>
 	);

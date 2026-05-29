@@ -240,6 +240,12 @@ func (r *TechRepository) FindAll(filter *dto.TechFilter) ([]*dto.TechItemPublic,
 			argPos++
 		}
 
+		if filter.UserID != nil {
+			conditions = append(conditions, fmt.Sprintf("i.last_worker_id = $%d", argPos))
+			args = append(args, *filter.UserID)
+			argPos++
+		}
+
 		if filter.Brand != nil {
 			conditions = append(conditions, fmt.Sprintf("t.brand ILIKE $%d", argPos))
 			args = append(args, "%"+*filter.Brand+"%")

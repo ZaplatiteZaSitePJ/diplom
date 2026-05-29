@@ -5,6 +5,7 @@ import type { StorageType } from "@entities/Storages/types/storages.type";
 import { useNavigate } from "react-router-dom";
 import StorageSearch from "@widgets/Storages/StorageSearch/StorageSearch";
 import { useDeleteStorageMutation } from "@app/api/storage/storageAPI";
+import { enqueueSnackbar } from "notistack";
 
 type StorageDeleteModalProps = {
 	storage: StorageType;
@@ -32,10 +33,21 @@ const StorageDeleteModal: FC<StorageDeleteModalProps> = ({
 			await triggerDelete({
 				id: storage.id,
 				newStorageName: newPlace?.storageName,
+			}).unwrap();
+			enqueueSnackbar(`Хранилище ${storage.id} Успешно удалено!`, {
+				variant: "success",
+				autoHideDuration: 7000,
 			});
 			handleClose?.();
 			navigate("/storages");
-		} catch (error) {
+		} catch (error: any) {
+			enqueueSnackbar(
+				`Ошибка! Хранилище ${storage.id} не удалось удалить! Попробуйте позже.`,
+				{
+					variant: "error",
+					autoHideDuration: 7000,
+				},
+			);
 			console.log(error);
 		}
 	};

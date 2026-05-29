@@ -15,7 +15,7 @@
 		"useDefineForClassFields": true,
 		"lib": ["ES2023", "DOM", "DOM.Iterable"],
 		"module": "ESNext",
-		"types": ["vite/client"],
+		"types": ["vite/client", "cypress", "node"],
 		"skipLibCheck": true,
 
 		/* Bundler mode */
@@ -34,5 +34,5 @@
 		"noFallthroughCasesInSwitch": true,
 		"noUncheckedSideEffectImports": true
 	},
-	"include": ["src"]
+	"include": ["src", "cypress"]
 }

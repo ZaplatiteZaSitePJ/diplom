@@ -19,6 +19,13 @@ export const docsApi = baseApi.injectEndpoints({
 			providesTags: ["Docs"],
 		}),
 
+		getMyDocs: builder.query({
+			query: () => ({
+				url: "/me/items/docs",
+				method: "GET",
+			}),
+		}),
+
 		// GET BY ID
 		getDocsById: builder.query<DocsResponse, string>({
 			query: (id) => `/admin/items/docs/${id}`,
@@ -61,6 +68,7 @@ export const docsApi = baseApi.injectEndpoints({
 
 export const {
 	useGetDocssQuery,
+	useGetMyDocsQuery,
 	useLazyGetDocsByIdQuery,
 	useCreateDocsMutation,
 	useDeleteDocsMutation,

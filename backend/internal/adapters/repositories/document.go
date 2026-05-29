@@ -235,6 +235,12 @@ func (r *DocumentRepository) FindAll(filter *dto.DocsFilter) ([]*dto.DocsItemPub
 			argPos++
 		}
 
+		if filter.UserID != nil { // 👈 ВОТ ЭТО
+			conditions = append(conditions, fmt.Sprintf("i.last_worker_id = $%d", argPos))
+			args = append(args, *filter.UserID)
+			argPos++
+		}
+
 		if filter.DocNumber != nil {
 			conditions = append(conditions, fmt.Sprintf("d.doc_number ILIKE $%d", argPos))
 			args = append(args, "%"+*filter.DocNumber+"%")
@@ -242,23 +248,30 @@ func (r *DocumentRepository) FindAll(filter *dto.DocsFilter) ([]*dto.DocsItemPub
 		}
 
 		if filter.LastWorkerEmail != nil {
-			conditions = append(conditions, fmt.Sprintf("u.email = $%d", argPos))
-			args = append(args, *filter.LastWorkerEmail)
+			conditions = append(conditions, fmt.Sprintf("u.email ILIKE $%d", argPos))
+			args = append(args, "%"+*filter.LastWorkerEmail+"%")
 			argPos++
 		}
 
+		if filter.ResponsibleWorkerEmail != nil {
+			conditions = append(conditions, fmt.Sprintf("d.responsible_worker_email ILIKE $%d", argPos))
+			args = append(args, "%"+*filter.ResponsibleWorkerEmail+"%")
+			argPos++
+		}
+		
 		if filter.LastStorage != nil {
-			conditions = append(conditions, fmt.Sprintf("s.storage_name = $%d", argPos))
-			args = append(args, *filter.LastStorage)
+			conditions = append(conditions, fmt.Sprintf("s.storage_name ILIKE $%d", argPos))
+			args = append(args, "%"+*filter.LastStorage+"%")
 			argPos++
 		}
 
 		if filter.Category != nil {
-			conditions = append(conditions, fmt.Sprintf("c.name = $%d", argPos))
-			args = append(args, *filter.Category)
+			conditions = append(conditions, fmt.Sprintf("c.name ILIKE $%d", argPos))
+			args = append(args, "%"+*filter.Category+"%")
 			argPos++
 		}
 
+		// статус обычно лучше оставлять точным
 		if filter.TransferStatus != nil {
 			conditions = append(conditions, fmt.Sprintf("i.transfer_status = $%d", argPos))
 			args = append(args, *filter.TransferStatus)

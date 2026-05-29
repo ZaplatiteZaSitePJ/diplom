@@ -1,14 +1,26 @@
 import styles from "./ObjectList.module.scss";
-import { useGetTechsQuery } from "@app/api/items/tech/techAPI";
 import {
+	useGetMyTechsQuery,
+	useGetTechsQuery,
+} from "@app/api/items/tech/techAPI";
+import {
+	getQualityLabel,
 	getTransferLabel,
 	makeLightID,
 } from "@entities/Objects/types/baseObjects.type";
-import type { TechFilter } from "@entities/Objects/types/tech.type";
+import type { TechFilter, TechItem } from "@entities/Objects/types/tech.type";
 import { useNavigate } from "react-router-dom";
 
-const TechList = ({ filter }: { filter: TechFilter }) => {
-	const { data: items } = useGetTechsQuery(filter);
+const TechList = ({ filter, isMe }: { filter: TechFilter; isMe?: boolean }) => {
+	const { data: allItems } = useGetTechsQuery(filter, {
+		skip: isMe, // 👈 пропускаем если me
+	});
+
+	const { data: myItems } = useGetMyTechsQuery(undefined, {
+		skip: !isMe, // 👈 пропускаем если НЕ me
+	});
+
+	const items = isMe ? myItems : allItems;
 	const navigate = useNavigate();
 
 	return (
@@ -21,13 +33,13 @@ const TechList = ({ filter }: { filter: TechFilter }) => {
 							<th>название</th>
 							<th>категория</th>
 							<th>трансфер</th>
-							<th>последнее хранилище</th>
+							<th>качество</th>
 							<th>последний владелец</th>
 						</tr>
 					</thead>
 
 					<tbody>
-						{items.data.map((el) => (
+						{items.data.map((el: TechItem) => (
 							<tr
 								key={el.id}
 								onClick={() =>
@@ -39,7 +51,9 @@ const TechList = ({ filter }: { filter: TechFilter }) => {
 								<td>{el.universal_name}</td>
 								<td>{el.category || "—"}</td>
 								<td>{getTransferLabel(el.transfer_status)}</td>
-								<td>{el.last_storage || "—"}</td>
+								<td>
+									{getQualityLabel(el.quality_status) || "—"}
+								</td>
 								<td>{el.last_worker_email || "—"}</td>
 							</tr>
 						))}

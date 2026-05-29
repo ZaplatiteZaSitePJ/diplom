@@ -12,4 +12,5 @@ export type EntitiesLayoutProps = {
 	entitie?: StorageType | ObjectType;
 	callPlace?: "storage" | "object" | "user";
 	isMe?: boolean;
+	readOnly?: boolean;
 };

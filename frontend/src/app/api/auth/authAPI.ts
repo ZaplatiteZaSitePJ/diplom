@@ -9,7 +9,10 @@ export const authApi = baseApi.injectEndpoints({
 		// LOGIN
 		login: builder.mutation<
 			authResponse,
-			Pick<UserType, "email" | "password">
+			{
+				email: string;
+				password: string;
+			}
 		>({
 			query: (body) => ({
 				url: "/auth/login",

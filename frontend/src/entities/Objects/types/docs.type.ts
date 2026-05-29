@@ -16,4 +16,5 @@ export interface DocsFilter {
 	last_storage?: string;
 	category?: string;
 	transfer_status?: string;
+	responsible_worker_email?: string;
 }

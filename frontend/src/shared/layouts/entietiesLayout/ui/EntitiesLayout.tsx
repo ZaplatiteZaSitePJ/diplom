@@ -9,6 +9,7 @@ import ResourcesPanel from "@widgets/Resources/ResourcesSearch/ResourcesSearch";
 import ItemDeleteModal from "@widgets/DeleteModal/ObjectDelete";
 import StorageDeleteModal from "@widgets/DeleteModal/StorageDelete";
 import { useLogoutMutation } from "@app/api/auth/authAPI";
+import { enqueueSnackbar } from "notistack";
 
 //
 // 🔹 BaseLayout (общая обёртка)
@@ -20,6 +21,7 @@ type BaseLayoutProps = {
 	children: ReactNode;
 	actions?: ReactNode;
 	statistic?: React.ReactNode;
+	readOnly?: boolean;
 };
 
 const BaseLayout: FC<BaseLayoutProps> = ({
@@ -64,6 +66,7 @@ export const UserLayout: FC<EntitiesLayoutProps> = ({
 	subTitle,
 	form,
 	isMe,
+	readOnly,
 }) => {
 	const [logout] = useLogoutMutation();
 	const navigate = useNavigate();
@@ -76,8 +79,20 @@ export const UserLayout: FC<EntitiesLayoutProps> = ({
 		try {
 			await logout().unwrap();
 			localStorage.removeItem("access");
+			localStorage.removeItem("role");
+			enqueueSnackbar("Успешный выход из системы", {
+				variant: "success",
+				autoHideDuration: 5000,
+			});
 			navigate("/auth");
 		} catch (e) {
+			enqueueSnackbar(
+				"Ошибка! Сервер сейчас недоступен. Попробуйте позже",
+				{
+					variant: "success",
+					autoHideDuration: 7000,
+				},
+			);
 			console.error(e);
 		}
 	};
@@ -105,7 +120,7 @@ export const UserLayout: FC<EntitiesLayoutProps> = ({
 					</>
 				}
 			>
-				<FormPanel>{form}</FormPanel>
+				<FormPanel readOnlyProp={readOnly}>{form}</FormPanel>
 			</BaseLayout>
 
 			{isAddModalOpen && (

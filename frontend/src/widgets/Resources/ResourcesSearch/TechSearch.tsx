@@ -5,50 +5,43 @@ import { useState, type FC } from "react";
 import cn from "classnames";
 import ObjectList from "../ObjectList/TechList";
 import type { TechFilter, TechItem } from "@entities/Objects/types/tech.type";
-import type {
-	QualityStatus,
-	TransferStatus,
-} from "@entities/Objects/types/baseObjects.type";
 import TransferSelect from "@features/formElements/ui/TransferSelect";
 import QualitySelect from "@features/formElements/ui/QualitySelect";
 
-type ResourcesProps = {
-	callPlace?: Extract<TransferStatus, "worker" | "storage">;
-	name?: string;
-	isBroken?: boolean;
+type Props = {
+	constFilter?: Partial<TechFilter>;
+	isMe?: boolean;
 };
 
-const TechSearch: FC<ResourcesProps> = ({
-	callPlace,
-	name,
-	isBroken = undefined,
-}) => {
+const TechSearch: FC<Props> = ({ constFilter = {}, isMe = false }) => {
 	const { register, watch } = useForm<Partial<TechItem>>();
-
-	const [isWrapped, setWrapped] = useState<boolean>(false);
+	const [isWrapped, setWrapped] = useState(false);
 
 	const handleWrap = () => {
 		setWrapped((prev) => !prev);
 	};
 
-	const rawValues = watch();
+	const raw = watch();
+
+	const isLocked = (field: keyof TechFilter) =>
+		constFilter[field] !== undefined;
 
 	const filter: TechFilter = {
-		id: rawValues.id ?? undefined,
-		brand: rawValues.brand ?? undefined,
-		model: rawValues.model ?? undefined,
-		last_worker:
-			callPlace == "worker" ? name : (rawValues.last_worker ?? undefined),
-		last_storage:
-			callPlace == "storage"
-				? name
-				: (rawValues.last_storage ?? undefined),
-		category: rawValues.category ?? undefined,
-		quality_status: rawValues.quality_status ?? undefined,
-		transfer_status: rawValues.transfer_status ?? undefined,
-	};
+		id: constFilter.id ?? raw.id ?? undefined,
+		brand: constFilter.brand ?? raw.brand ?? undefined,
+		model: constFilter.model ?? raw.model ?? undefined,
+		category: constFilter.category ?? raw.category ?? undefined,
 
-	console.log("Form changed:", filter);
+		last_worker: constFilter.last_worker ?? raw.last_worker ?? undefined,
+
+		last_storage: constFilter.last_storage ?? raw.last_storage ?? undefined,
+
+		quality_status:
+			constFilter.quality_status ?? raw.quality_status ?? undefined,
+
+		transfer_status:
+			constFilter.transfer_status ?? raw.transfer_status ?? undefined,
+	};
 
 	return (
 		<div className={styles.objectFormSearch}>
@@ -69,17 +62,23 @@ const TechSearch: FC<ResourcesProps> = ({
 						label="Артикул"
 						register={register("id")}
 						width="240px"
+						defaultValue={constFilter.id}
+						isAvailable={!isLocked("id")}
 					/>
 					<Input
 						label="Бренд"
 						register={register("brand")}
 						width="240px"
+						defaultValue={constFilter.brand}
+						isAvailable={!isLocked("brand")}
 					/>
 					<Input
 						label="Модель"
 						register={register("model")}
 						width="240px"
 						type="string"
+						defaultValue={constFilter.model}
+						isAvailable={!isLocked("model")}
 					/>
 				</div>
 
@@ -91,14 +90,8 @@ const TechSearch: FC<ResourcesProps> = ({
 				>
 					<TransferSelect
 						register={register("transfer_status")}
-						isAvailable={callPlace ? false : true}
-						defaultValue={
-							callPlace
-								? callPlace == "storage"
-									? "storage"
-									: "worker"
-								: undefined
-						}
+						isAvailable={!isLocked("transfer_status")}
+						defaultValue={constFilter.transfer_status}
 					/>
 
 					<Input
@@ -106,8 +99,8 @@ const TechSearch: FC<ResourcesProps> = ({
 						register={register("last_storage")}
 						width="240px"
 						type="string"
-						value={callPlace == "storage" ? name : undefined}
-						isAvailable={callPlace == "storage" ? false : true}
+						defaultValue={constFilter.last_storage}
+						isAvailable={!isLocked("last_storage")}
 					/>
 
 					<Input
@@ -115,14 +108,14 @@ const TechSearch: FC<ResourcesProps> = ({
 						register={register("last_worker")}
 						width="240px"
 						type="string"
-						value={callPlace == "worker" ? name : undefined}
-						isAvailable={callPlace == "worker" ? false : true}
+						defaultValue={constFilter.last_worker}
+						isAvailable={!isLocked("last_worker")}
 					/>
 
 					<QualitySelect
 						register={register("quality_status")}
-						isAvailable={isBroken ? false : true}
-						defaultValue={isBroken ? "faulty" : undefined}
+						isAvailable={!isLocked("quality_status")}
+						defaultValue={constFilter.quality_status}
 					/>
 
 					<Input
@@ -130,6 +123,8 @@ const TechSearch: FC<ResourcesProps> = ({
 						register={register("category")}
 						width="240px"
 						type="string"
+						defaultValue={constFilter.category}
+						isAvailable={!isLocked("category")}
 					/>
 				</div>
 
@@ -138,9 +133,7 @@ const TechSearch: FC<ResourcesProps> = ({
 					style={
 						isWrapped ? { display: "block" } : { display: "none" }
 					}
-				>
-					{" "}
-				</div>
+				/>
 			</form>
 
 			<button
@@ -154,7 +147,7 @@ const TechSearch: FC<ResourcesProps> = ({
 			</button>
 
 			<div className={styles.objectFormSearch__objectListPlace}>
-				<ObjectList filter={filter} />
+				<ObjectList filter={filter} isMe={isMe} />
 			</div>
 		</div>
 	);

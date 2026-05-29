@@ -135,51 +135,66 @@ func (r *SoftwareRepository) FindAll(filter *dto.SoftwareFilter) ([]*dto.Softwar
 
 	if filter != nil {
 
-		if filter.ID != nil {
+		if filter.ID != nil && *filter.ID != "" {
 			conditions = append(conditions, fmt.Sprintf("i.id = $%d", argPos))
 			args = append(args, *filter.ID)
 			argPos++
 		}
 
-		if filter.Category != nil {
+		if filter.UserID != nil {
+			conditions = append(conditions, fmt.Sprintf("i.last_worker_id = $%d", argPos))
+			args = append(args, *filter.UserID)
+			argPos++
+		}
+
+		if filter.Category != nil && *filter.Category != "" {
 			conditions = append(conditions, fmt.Sprintf("c.name = $%d", argPos))
 			args = append(args, *filter.Category)
 			argPos++
 		}
 
-		if filter.LastWorkerEmail != nil {
+		if filter.LastWorkerEmail != nil && *filter.LastWorkerEmail != "" {
 			conditions = append(conditions, fmt.Sprintf("u.email = $%d", argPos))
 			args = append(args, *filter.LastWorkerEmail)
 			argPos++
 		}
 
-		if filter.LastStorage != nil {
+		if filter.LastStorage != nil && *filter.LastStorage != "" {
 			conditions = append(conditions, fmt.Sprintf("s.storage_name = $%d", argPos))
 			args = append(args, *filter.LastStorage)
 			argPos++
 		}
 
-		if filter.TransferStatus != nil {
+		if filter.TransferStatus != nil && *filter.TransferStatus != "" {
 			conditions = append(conditions, fmt.Sprintf("i.transfer_status = $%d", argPos))
 			args = append(args, *filter.TransferStatus)
 			argPos++
 		}
 
-		if filter.Vendor != nil {
+		if filter.Vendor != nil && *filter.Vendor != "" {
 			conditions = append(conditions, fmt.Sprintf("sw.vendor ILIKE $%d", argPos))
 			args = append(args, "%"+*filter.Vendor+"%")
 			argPos++
 		}
 
-		if filter.Title != nil {
+		if filter.Title != nil && *filter.Title != "" {
 			conditions = append(conditions, fmt.Sprintf("sw.title ILIKE $%d", argPos))
 			args = append(args, "%"+*filter.Title+"%")
 			argPos++
 		}
 
-		if filter.LicenseKey != nil {
+		if filter.LicenseKey != nil && *filter.LicenseKey != "" {
 			conditions = append(conditions, fmt.Sprintf("sw.license_key ILIKE $%d", argPos))
 			args = append(args, "%"+*filter.LicenseKey+"%")
+			argPos++
+		}
+
+		// 🔥 FIXED expired_at (СТРОКА → DATE SAFE)
+		if filter.ExpiredAt != nil && *filter.ExpiredAt != "" {
+			conditions = append(conditions,
+				fmt.Sprintf("sw.expired_at < ($%d::date + INTERVAL '1 day')", argPos),
+			)
+			args = append(args, *filter.ExpiredAt)
 			argPos++
 		}
 	}

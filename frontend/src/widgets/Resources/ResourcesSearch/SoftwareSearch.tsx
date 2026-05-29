@@ -10,13 +10,14 @@ import cn from "classnames";
 
 import { Input } from "@shared/ui/ui-kit";
 import ObjectList from "../ObjectList/SoftwareList";
+import { normalize } from "@features/utils/normalizeRequests";
 
 type Props = {
-	callPlace?: "worker" | "storage";
-	name?: string;
+	constFilter?: Partial<SoftwareFilter>;
+	isMe?: boolean;
 };
 
-const SoftwareSearch: FC<Props> = ({ callPlace, name }) => {
+const SoftwareSearch: FC<Props> = ({ constFilter = {}, isMe }) => {
 	const { register, watch } = useForm<Partial<SoftwareItemPublic>>();
 	const [isWrapped, setWrapped] = useState(false);
 
@@ -26,27 +27,28 @@ const SoftwareSearch: FC<Props> = ({ callPlace, name }) => {
 
 	const raw = watch();
 
+	const isLocked = (field: keyof SoftwareFilter) =>
+		constFilter[field] !== undefined;
+
 	const filter: SoftwareFilter = {
-		id: raw.id ?? undefined,
-		category: raw.category ?? undefined,
-		vendor: raw.vendor ?? undefined,
-		license_key: raw.license_key ?? undefined,
-		title: raw.title ?? undefined,
-		purchase_price: raw.purchase_price ?? undefined,
+		id: normalize(constFilter.id ?? raw.id),
+		category: normalize(constFilter.category ?? raw.category),
+		vendor: normalize(constFilter.vendor ?? raw.vendor),
+		license_key: normalize(constFilter.license_key ?? raw.license_key),
+		title: normalize(constFilter.title ?? raw.title),
+		purchase_price: normalize(
+			constFilter.purchase_price ?? raw.purchase_price,
+		),
 
-		last_worker_email:
-			callPlace === "worker"
-				? name
-				: (raw.last_worker_email ?? undefined),
+		last_worker_email: normalize(
+			constFilter.last_worker_email ?? raw.last_worker_email,
+		),
 
-		transfer_status:
-			callPlace === "worker"
-				? "worker"
-				: callPlace === "storage"
-					? "storage"
-					: undefined,
+		transfer_status: normalize(constFilter.transfer_status),
+		last_storage: normalize(constFilter.last_storage),
 
-		last_storage: callPlace === "storage" ? name : undefined,
+		// 🔥 ВАЖНО: берём raw, а не constFilter
+		expired_at: raw.expired_at ?? constFilter.expired_at,
 	};
 
 	return (
@@ -68,17 +70,23 @@ const SoftwareSearch: FC<Props> = ({ callPlace, name }) => {
 						label="Артикул"
 						register={register("id")}
 						width="240px"
+						defaultValue={constFilter.id}
+						isAvailable={!isLocked("id")}
 					/>
 					<Input
 						label="Вендор"
 						register={register("vendor")}
 						width="240px"
+						defaultValue={constFilter.vendor}
+						isAvailable={!isLocked("vendor")}
 					/>
 					<Input
 						label="Продукт"
 						register={register("title")}
 						width="240px"
 						type="string"
+						defaultValue={constFilter.title}
+						isAvailable={!isLocked("title")}
 					/>
 				</div>
 
@@ -93,15 +101,17 @@ const SoftwareSearch: FC<Props> = ({ callPlace, name }) => {
 						register={register("category")}
 						width="240px"
 						type="string"
+						defaultValue={constFilter.category}
+						isAvailable={!isLocked("category")}
 					/>
 
 					<Input
 						label="Последний владелец"
-						register={register("last_worker")}
+						register={register("last_worker_email")}
 						width="240px"
 						type="string"
-						value={callPlace == "worker" ? name : undefined}
-						isAvailable={callPlace == "worker" ? false : true}
+						defaultValue={constFilter.last_worker_email}
+						isAvailable={!isLocked("last_worker_email")}
 					/>
 
 					<Input
@@ -109,8 +119,8 @@ const SoftwareSearch: FC<Props> = ({ callPlace, name }) => {
 						register={register("purchase_price")}
 						width="240px"
 						type="number"
-						value={callPlace == "worker" ? name : undefined}
-						isAvailable={callPlace == "worker" ? false : true}
+						defaultValue={constFilter.purchase_price}
+						isAvailable={!isLocked("purchase_price")}
 					/>
 				</div>
 
@@ -119,9 +129,7 @@ const SoftwareSearch: FC<Props> = ({ callPlace, name }) => {
 					style={
 						isWrapped ? { display: "block" } : { display: "none" }
 					}
-				>
-					{" "}
-				</div>
+				></div>
 			</form>
 
 			<button
@@ -135,7 +143,7 @@ const SoftwareSearch: FC<Props> = ({ callPlace, name }) => {
 			</button>
 
 			<div className={styles.objectFormSearch__objectListPlace}>
-				<ObjectList filter={filter} />
+				<ObjectList filter={filter} isMe={isMe} />
 			</div>
 		</div>
 	);

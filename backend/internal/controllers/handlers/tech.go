@@ -4,10 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"inno-accounting/internal/controllers/middleware"
 	"inno-accounting/internal/dto"
 	"inno-accounting/pkg/logger"
 	"inno-accounting/pkg/server_utils/app_errors"
 	"inno-accounting/pkg/server_utils/configure_headers"
+	custom_errors "inno-accounting/pkg/server_utils/errors"
 	"inno-accounting/pkg/server_utils/response_message"
 	"net/http"
 	"strconv"
@@ -114,6 +116,30 @@ func (h *Handlers) GetAllTech(w http.ResponseWriter, r *http.Request) {
 
 	response_message.WrapperResponseJSON(w, 200, techs)
 }
+
+// ME variation
+func (h *Handlers) GetMyTech(w http.ResponseWriter, r *http.Request) {
+	configure_headers.DefaultHeader(w)
+
+	authData := middleware.GetAuthData(r.Context())
+
+	filter := &dto.TechFilter{
+		UserID: &authData.UserID,
+	}
+
+	techs, err := h.TechItems.FindAllTechs(filter)
+	if err != nil {
+		custom_errors.ErrorResponse(w, err, logger.GetLoger())
+		return
+	}
+
+	if techs == nil {
+		techs = []*dto.TechItemPublic{}
+	}
+
+	response_message.WrapperResponseJSON(w, 200, techs)
+}
+
 
 // GetTechByID returns single tech object by UUID
 func (h *Handlers) GetTechByID(w http.ResponseWriter, r *http.Request) {

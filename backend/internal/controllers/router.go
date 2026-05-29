@@ -25,6 +25,9 @@ func InitRouter(h *handlers.Handlers, jwtManager jwt.TokenManager) *mux.Router {
 	me := protected.PathPrefix("/me").Subrouter()
 	me.HandleFunc("/profile", h.GetUserByMe).Methods("GET")
 	me.HandleFunc("/logout", h.Logout).Methods("POST")
+	me.HandleFunc("/items/tech", h.GetMyTech).Methods("GET")
+	me.HandleFunc("/items/docs", h.GetMyDocuments).Methods("GET")
+	me.HandleFunc("/items/software", h.GetMySoftware).Methods("GET")
 	
 	// ADMIN
 	admin := protected.PathPrefix("/admin").Subrouter()

@@ -19,3 +19,7 @@ export const fromISODate = (date?: string | null) => {
 	// превращаем в ISO строку (UTC)
 	return d.toISOString();
 };
+
+export const toDateOnly = (date: Date) => {
+	return date.toISOString().split("T")[0];
+};

@@ -8,5 +8,5 @@ postgres_uri = "host=localhost port=5432 user=postgres password=postgres dbname=
 [jwt]
 access_secret = "ndvfk3-fgjldsfZsdfIJFM5958zlknmgfd-145"
 refresh_secret = "vmOMfdk4385#@)$*fg,ie4Doi43M<DFKLL43k"
-access_ttl = 5
+access_ttl = 1
 refresh_ttl = 15

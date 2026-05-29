@@ -1,16 +1,27 @@
-import { useGetDocssQuery } from "@app/api/items/docs/docsAPI";
+import {
+	useGetDocssQuery,
+	useGetMyDocsQuery,
+} from "@app/api/items/docs/docsAPI";
 import styles from "./ObjectList.module.scss";
 import {
 	getTransferLabel,
 	makeLightID,
 } from "@entities/Objects/types/baseObjects.type";
-import type { DocsFilter } from "@entities/Objects/types/docs.type";
+import type { DocsFilter, DocsItem } from "@entities/Objects/types/docs.type";
 import { useNavigate } from "react-router-dom";
 
-const DocsList = ({ filter }: { filter: DocsFilter }) => {
-	const { data: items } = useGetDocssQuery(filter);
+const DocsList = ({ filter, isMe }: { filter: DocsFilter; isMe?: boolean }) => {
 	const navigate = useNavigate();
-	console.log(items);
+
+	const { data: allItems } = useGetDocssQuery(filter, {
+		skip: isMe,
+	});
+
+	const { data: myItems } = useGetMyDocsQuery(undefined, {
+		skip: !isMe,
+	});
+
+	const items = isMe ? myItems : allItems;
 
 	return (
 		<div className={styles.objectList}>
@@ -27,7 +38,7 @@ const DocsList = ({ filter }: { filter: DocsFilter }) => {
 					</thead>
 
 					<tbody>
-						{items.data.map((el) => (
+						{items.data.map((el: DocsItem) => (
 							<tr
 								key={el.id}
 								onClick={() =>
@@ -37,7 +48,6 @@ const DocsList = ({ filter }: { filter: DocsFilter }) => {
 							>
 								<td>{makeLightID(el.id)}</td>
 								<td>{el.universal_name}</td>
-
 								<td>{getTransferLabel(el.transfer_status)}</td>
 								<td>{el.last_storage || "—"}</td>
 								<td>{el.responsible_worker_email || "—"}</td>
