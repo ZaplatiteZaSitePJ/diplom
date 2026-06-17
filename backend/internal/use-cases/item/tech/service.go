@@ -86,6 +86,7 @@ func (t *TechService) CreateTech(input *dto.TechItemPublic) (*domain.Tech, error
 			QualityStatus:  &quality,
 			PurchasePrice:  purchasePrice,
 			TypeID:         0,
+			PostNumber: input.PostNumber,
 		},
 		Brand:             input.Brand,
 		Model:             input.Model,
@@ -164,6 +165,8 @@ func (t *TechService) FindTechByID(techID uuid.UUID) (*dto.TechItemPublic, error
 		WarrantyStartedAt: tech.WarrantyStartedAt,
 		WarrantyEndAt:     tech.WarrantyEndAt,
 		UniversalName:     tech.UniversalName,
+		LastStorageID: tech.LastStorageID,
+		PostNumber: tech.PostNumber,
 	}, nil
 }
 
@@ -256,6 +259,10 @@ func (t *TechService) ChangeTechByID(techID uuid.UUID, input *dto.TechItemPublic
 
 	if input.PurchasePrice != 0 {
 		existingTech.PurchasePrice = &input.PurchasePrice
+	}
+
+	if *input.PostNumber != "" {
+		existingTech.PostNumber = input.PostNumber
 	}
 
 	// --- quality

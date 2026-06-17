@@ -18,6 +18,7 @@ type User struct {
 	Grade     string    `json:"grade"`
 	City      string    `json:"city"`
 	Role      string    `json:"role"`
+	IsActive bool `json:"is_active"`
 
 	HashedPassword string `json:"-"`
 	

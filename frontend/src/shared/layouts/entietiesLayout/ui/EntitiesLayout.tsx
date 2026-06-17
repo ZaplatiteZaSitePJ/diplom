@@ -104,9 +104,12 @@ export const UserLayout: FC<EntitiesLayoutProps> = ({
 				subTitle={subTitle}
 				actions={
 					<>
-						<ButtonFilled onClick={() => setIsAddModalOpen(true)}>
+						{/* <ButtonFilled
+							disabled
+							onClick={() => setIsAddModalOpen(true)}
+						>
 							Записать объект
-						</ButtonFilled>
+						</ButtonFilled> */}
 
 						{isMe && (
 							<ButtonBorderred
@@ -148,6 +151,9 @@ export const StorageLayout: FC<EntitiesLayoutProps> = ({
 	const [isDeleting, setIsDeleting] = useState(false);
 	const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
+	console.log("entitie");
+	console.log(entitie);
+
 	return (
 		<>
 			<BaseLayout
@@ -182,7 +188,11 @@ export const StorageLayout: FC<EntitiesLayoutProps> = ({
 					title="Добавить объект"
 					onClose={() => setIsAddModalOpen(false)}
 				>
-					<ResourcesPanel mode="create" />
+					<ResourcesPanel
+						mode="create"
+						callPlace="storage"
+						storageName={entitie?.storageName || ""}
+					/>
 				</Modal>
 			)}
 

@@ -5,6 +5,8 @@ export type TechItem = BaseObjectType & {
 	model: string;
 	warranty_started_at: string;
 	warranty_end_at: string;
+	last_storage_id?: string;
+	post_number?: string;
 };
 
 export interface TechFilter {

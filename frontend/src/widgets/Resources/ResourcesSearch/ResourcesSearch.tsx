@@ -11,17 +11,21 @@ import CategoriesChips from "@widgets/Resources/CategoriesChips/CategoriesChips"
 import TechForm from "../ObjectsForm/ObjectForm/TechForm";
 import DocsForm from "../ObjectsForm/ObjectForm/DocsForm";
 import SoftwareForm from "../ObjectsForm/ObjectForm/SoftwareForm";
+import type { TechItem } from "@entities/Objects/types/tech.type";
+import type { DocsItem } from "@entities/Objects/types/docs.type";
 
 type ResourcesSearchProps = {
 	callPlace?: Extract<TransferStatus, "worker" | "storage"> | "me";
 	mode?: "search" | "create";
 	name?: string;
+	storageName?: string;
 };
 
 const ResourcesPanel: FC<ResourcesSearchProps> = ({
 	callPlace,
 	name,
 	mode = "search",
+	storageName = undefined,
 }) => {
 	const [currentCategorie, setCurrentCategorie] =
 		useState<CategoriesList>("Техника");
@@ -73,10 +77,28 @@ const ResourcesPanel: FC<ResourcesSearchProps> = ({
 	const renderCreate = () => {
 		switch (currentCategorie) {
 			case "Техника":
-				return <TechForm mode="create" />;
+				return (
+					<TechForm
+						mode="create"
+						object={
+							callPlace == "storage"
+								? ({ last_storage: storageName } as TechItem)
+								: undefined
+						}
+					/>
+				);
 
 			case "Документы":
-				return <DocsForm mode="create" />;
+				return (
+					<DocsForm
+						mode="create"
+						object={
+							callPlace == "storage"
+								? ({ last_storage: storageName } as DocsItem)
+								: undefined
+						}
+					/>
+				);
 
 			case "Программное обеспечение":
 				return <SoftwareForm mode="create" />;

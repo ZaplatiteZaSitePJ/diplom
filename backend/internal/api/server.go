@@ -5,6 +5,7 @@ import (
 	"inno-accounting/internal/adapters/jwt"
 	"inno-accounting/internal/adapters/postgres"
 	"inno-accounting/internal/adapters/repositories"
+	"inno-accounting/internal/adapters/smtp"
 	"inno-accounting/internal/controllers"
 	"inno-accounting/internal/controllers/handlers"
 	"inno-accounting/internal/use-cases/auth"
@@ -63,7 +64,18 @@ func (a *API) Start() error {
 	userService := user.New(userRepo)
 
 	authRepo := repositories.NewAuthRepository(storage.GetDB())
-	authService := auth.New(authRepo, userService, jwtManager)
+	smtpService := smtp.New(
+		"localhost",
+		"1025",
+			"noreply@test.com",
+	)
+
+	authService := auth.New(
+		authRepo,
+		userService,
+		jwtManager,
+		smtpService,
+	)
 
 	storageRepo := repositories.NewStorageRepository(storage.GetDB())
 	storageService := storages.New(storageRepo)

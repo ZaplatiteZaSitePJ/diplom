@@ -17,6 +17,7 @@ func InitRouter(h *handlers.Handlers, jwtManager jwt.TokenManager) *mux.Router {
 	router.HandleFunc(urlPrefix+"/auth/register", h.CreateUser).Methods("POST")
 	router.HandleFunc(urlPrefix+"/auth/login", h.Login).Methods("POST")
 	router.HandleFunc(urlPrefix+"/auth/refresh", h.Refresh).Methods("POST")
+	router.HandleFunc("/auth/activate", h.Activate).Methods("GET")
 
 	// PROTECTED
 	protected := router.PathPrefix(urlPrefix).Subrouter()

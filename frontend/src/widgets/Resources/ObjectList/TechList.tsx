@@ -9,6 +9,7 @@ import {
 	makeLightID,
 } from "@entities/Objects/types/baseObjects.type";
 import type { TechFilter, TechItem } from "@entities/Objects/types/tech.type";
+import { lastPlaceFinder } from "@features/utils/lastPalceFinder";
 import { useNavigate } from "react-router-dom";
 
 const TechList = ({ filter, isMe }: { filter: TechFilter; isMe?: boolean }) => {
@@ -32,9 +33,9 @@ const TechList = ({ filter, isMe }: { filter: TechFilter; isMe?: boolean }) => {
 							<th>id</th>
 							<th>название</th>
 							<th>категория</th>
-							<th>трансфер</th>
 							<th>качество</th>
-							<th>последний владелец</th>
+							<th>трансфер</th>
+							<th>местонахождение</th>
 						</tr>
 					</thead>
 
@@ -50,11 +51,13 @@ const TechList = ({ filter, isMe }: { filter: TechFilter; isMe?: boolean }) => {
 								<td>{makeLightID(el.id)}</td>
 								<td>{el.universal_name}</td>
 								<td>{el.category || "—"}</td>
-								<td>{getTransferLabel(el.transfer_status)}</td>
 								<td>
 									{getQualityLabel(el.quality_status) || "—"}
 								</td>
-								<td>{el.last_worker_email || "—"}</td>
+								<td>{getTransferLabel(el.transfer_status)}</td>
+								<td>
+									{lastPlaceFinder(el.transfer_status, el)}
+								</td>
 							</tr>
 						))}
 					</tbody>

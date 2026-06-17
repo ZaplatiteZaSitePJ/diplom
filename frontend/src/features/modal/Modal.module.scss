@@ -32,9 +32,9 @@
 	}
 
 	&__container {
-		width: fit-content;
+		width: 125vh;
 		min-width: 800px;
-		max-width: 95vh;
+		// max-width: 95vh;
 		text-wrap: wrap;
 		max-height: 90vh;
 		overflow-y: auto;

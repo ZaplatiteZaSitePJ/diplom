@@ -1,19 +1,32 @@
 import { useForm, type SubmitHandler } from "react-hook-form";
-import { type FC, useEffect } from "react";
+import { type FC, useEffect, useState } from "react";
+
 import styles from "./ObjectForm.module.scss";
+
 import { ButtonText, Input } from "@shared/ui/ui-kit";
-// import StatusSelect from "@features/formElements/ui/StatusSelect";
+
 import type { TechItem } from "@entities/Objects/types/tech.type";
+import type { StorageType } from "@entities/Storages/types/storages.type";
+
 import {
 	useCreateTechMutation,
 	useUpdateTechMutation,
 } from "@app/api/items/tech/techAPI";
+
 import { toISODate } from "@features/utils/dateConverter";
 import { techDataForPush } from "./dataForPush";
+
 import TransferSelect from "@features/formElements/ui/TransferSelect";
 import QualitySelect from "@features/formElements/ui/QualitySelect";
 import CategorySelect from "@features/formElements/ui/CategorySelect";
+
+import StorageSearch from "@widgets/Storages/StorageSearch/StorageSearch";
+
 import { enqueueSnackbar } from "notistack";
+import { useGetStorageByIdQuery } from "@app/api/storage/storageAPI";
+import { skip } from "node:test";
+import type { UserType } from "@entities/User/types/user.type";
+import PersonalSearch from "@widgets/Resources/ResourcesSearch/PersonalSearch";
 
 type TechFormProps = {
 	object?: TechItem;
@@ -28,9 +41,25 @@ const TechForm: FC<TechFormProps> = ({
 	isReadOnly = false,
 	setReadOnly,
 }) => {
-	const { register, handleSubmit, reset } = useForm<TechItem>();
+	const { register, handleSubmit, reset, setValue, watch } =
+		useForm<TechItem>();
+	console.log(object);
+
 	const [triggerPost] = useCreateTechMutation();
 	const [triggerPatch] = useUpdateTechMutation();
+	const { data: storage } = useGetStorageByIdQuery(
+		object?.last_storage_id ?? "",
+		{
+			skip: !object?.last_storage_id,
+		},
+	);
+
+	const transferStatus = watch("transfer_status");
+	const [newPlace, setNewPlace] = useState<StorageType | undefined>();
+	const [newPerson, setNewPerson] = useState<UserType | undefined>();
+
+	const [openTreeStorage, setOpenTreeStorage] = useState<boolean>(false);
+	const [openTreePersonal, setOpenTreePersonal] = useState<boolean>(false);
 
 	useEffect(() => {
 		if (object) {
@@ -39,11 +68,47 @@ const TechForm: FC<TechFormProps> = ({
 				warranty_started_at: toISODate(object.warranty_started_at),
 				warranty_end_at: toISODate(object.warranty_end_at),
 			});
+
+			if (object.last_storage) {
+				setNewPlace({
+					id: "",
+					storageName: object.last_storage,
+					capacity: 0,
+					occupied_cells: 0,
+				} as StorageType);
+			}
 		}
-	}, [object, reset]);
+	}, [object, reset, setValue]);
+
+	const handleSelectStorage = (storage: StorageType) => {
+		setNewPlace(storage);
+
+		setValue("last_storage", storage.storageName);
+
+		setOpenTreeStorage(false);
+
+		enqueueSnackbar(`Выбрано хранилище ${storage.storageName}`, {
+			variant: "info",
+			autoHideDuration: 3000,
+		});
+	};
+
+	const handleSelectPerson = (person: UserType) => {
+		setNewPerson(person);
+
+		setValue("last_worker_email", person.email);
+
+		setOpenTreePersonal(false);
+
+		enqueueSnackbar(`Выбран пользователь ${person.email}`, {
+			variant: "info",
+			autoHideDuration: 3000,
+		});
+	};
 
 	const submitHandler: SubmitHandler<TechItem> = async (data) => {
 		const formattedData = techDataForPush(data);
+
 		const id = formattedData.id;
 
 		try {
@@ -148,22 +213,85 @@ const TechForm: FC<TechFormProps> = ({
 					register={register("transfer_status")}
 					defaultValue={object?.transfer_status}
 				/>
+				<div>
+					<Input
+						register={register("last_worker_email")}
+						type="string"
+						label="Последний пользователь"
+						width="240px"
+						isAvailable={false}
+					/>
+					{!isReadOnly && (
+						<ButtonText
+							type="button"
+							textSize="var(--smallest-font-size)"
+							textWeight={100}
+							onClick={() => {
+								setOpenTreePersonal((prev) => !prev);
+								setOpenTreeStorage(false);
+							}}
+						>
+							{!openTreePersonal
+								? "Изменить работника ↓"
+								: "Закрыть ↑"}
+						</ButtonText>
+					)}
+				</div>
 
-				<Input
-					register={register("last_worker_email")}
-					type="string"
-					label="Последний пользователь"
-					width="240px"
-					isAvailable={!isReadOnly}
-				/>
+				<div>
+					<Input
+						register={register("last_storage")}
+						type="string"
+						label="Последнее хранилище"
+						width="240px"
+						isAvailable={false}
+					/>
+					{!isReadOnly && (
+						<ButtonText
+							type="button"
+							textSize="var(--smallest-font-size)"
+							textWeight={100}
+							onClick={() => {
+								setOpenTreeStorage((prev) => !prev);
+								setOpenTreePersonal(false);
+							}}
+						>
+							{!openTreeStorage
+								? "Изменить хранилище ↓"
+								: "Закрыть ↑"}
+						</ButtonText>
+					)}
+				</div>
 
-				<Input
-					register={register("last_storage")}
-					type="string"
-					label="Последнее хранилище"
-					width="240px"
-					isAvailable={!isReadOnly}
-				/>
+				<div className={styles.objectForm__storageContainer}>
+					{openTreeStorage && (
+						<StorageSearch
+							mode="replace"
+							onSelect={handleSelectStorage}
+							storage={storage?.data}
+						/>
+					)}
+
+					{openTreePersonal && (
+						<PersonalSearch
+							mode="replace"
+							onSelect={handleSelectPerson}
+						/>
+					)}
+				</div>
+
+				{(transferStatus == "transfering_to_storage" ||
+					transferStatus == "transfering_to_worker") && (
+					<div className={styles.objectForm__additionalContainer}>
+						<Input
+							register={register("post_number")}
+							type="string"
+							label="Номер посылки"
+							width="240px"
+							isAvailable={!isReadOnly}
+						/>
+					</div>
+				)}
 			</div>
 
 			<div className={styles.objectForm__additionalContainer}>
@@ -196,10 +324,17 @@ const TechForm: FC<TechFormProps> = ({
 			{!isReadOnly && (
 				<div className={styles.objectForm__buttonsContainer}>
 					<ButtonText
+						type="button"
 						textWeight={100}
 						textSize="var(--normal-font-size)"
 						textColor="var(--grey-color)"
-						onClick={() => reset()}
+						onClick={() => {
+							reset();
+
+							setNewPlace(undefined);
+
+							setOpenTreeStorage(false);
+						}}
 					>
 						Сбросить
 					</ButtonText>

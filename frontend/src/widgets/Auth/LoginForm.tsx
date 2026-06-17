@@ -7,83 +7,126 @@ import cn from "classnames";
 import { useNavigate } from "react-router-dom";
 import type { UserType } from "@entities/User/types/user.type";
 import { useLoginMutation } from "@app/api/auth/authAPI";
-import { enqueueSnackbar } from "notistack";
+import { closeSnackbar, enqueueSnackbar } from "notistack";
+import { useEffect, useRef } from "react";
 
 export default function LoginForm() {
 	const navigate = useNavigate();
 
 	const { register, handleSubmit, reset, getValues } =
 		useForm<Pick<UserType, "email" | "password">>();
+
 	const [trigger, { isLoading, isError }] = useLoginMutation();
 
+	const retryIntervalRef = useRef<NodeJS.Timeout | null>(null);
+	const isRetryingRef = useRef(false);
+
+	const stopRetry = () => {
+		if (retryIntervalRef.current) {
+			clearInterval(retryIntervalRef.current);
+			retryIntervalRef.current = null;
+		}
+		isRetryingRef.current = false;
+	};
+
+	const loginRequest = async (values: {
+		email: string;
+		password: string;
+	}) => {
+		const response = await trigger(values).unwrap();
+
+		const access = response?.data?.access;
+
+		if (access) {
+			closeSnackbar();
+			localStorage.setItem("access", access);
+			localStorage.setItem("role", response?.data?.role);
+
+			enqueueSnackbar("Успешный вход!", {
+				variant: "success",
+				autoHideDuration: 3000,
+			});
+
+			stopRetry();
+			reset();
+
+			navigate("/profile", { replace: true });
+		}
+	};
+
+	const startRetry = (fixedValues: { email: string; password: string }) => {
+		if (isRetryingRef.current) return;
+
+		isRetryingRef.current = true;
+
+		retryIntervalRef.current = setInterval(async () => {
+			try {
+				await loginRequest(fixedValues);
+			} catch (err: any) {
+				const statusCode = err?.status;
+
+				if (statusCode !== 422) {
+					stopRetry();
+				}
+			}
+		}, 10000);
+	};
+
 	const onLogin = async () => {
-		if (
-			getValues().email.trim() == "" ||
-			getValues().password.trim() == ""
-		) {
+		const values = getValues();
+
+		if (values.email.trim() === "" || values.password.trim() === "") {
 			enqueueSnackbar(
 				"Ошибка! Поля почты и пароля не должны быть пустыми",
-				{
-					variant: "error",
-					autoHideDuration: 7000,
-				},
+				{ variant: "error", autoHideDuration: 7000 },
 			);
 			return;
 		}
 
 		try {
-			const response = await trigger(getValues()).unwrap();
-
-			const access = response?.data?.access;
-
-			if (access) {
-				localStorage.setItem("access", access);
-				localStorage.setItem("role", response?.data?.role);
-
-				enqueueSnackbar("Успешный вход!", {
-					variant: "success",
-					autoHideDuration: 3000,
-				});
-
-				reset();
-
-				navigate("/profile", { replace: true });
-			}
+			await loginRequest(values);
 		} catch (err: any) {
 			const statusCode = err?.status;
+
+			if (statusCode === 422) {
+				closeSnackbar();
+				enqueueSnackbar(
+					`Первый вход. Следуйте инструкциям, отправленным на электронную почту ${values.email}`,
+					{
+						variant: "info",
+						autoHideDuration: 70000,
+					},
+				);
+
+				startRetry(values);
+				return;
+			}
 
 			if (statusCode === 404 || statusCode === 401) {
 				enqueueSnackbar("Ошибка! Неправильный логин или пароль", {
 					variant: "error",
-					autoHideDuration: 7000,
+					autoHideDuration: 10000,
 				});
 			} else {
 				enqueueSnackbar(
-					"Ошибка подкдлючения! \nПроблемы с интернетом или сервер временно недоступен",
-					{
-						variant: "error",
-						autoHideDuration: 7000,
-					},
+					"Ошибка подключения! Проблемы с интернетом или сервер недоступен",
+					{ variant: "error", autoHideDuration: 7000 },
 				);
 			}
-
-			console.error(err);
 		}
 	};
+
+	useEffect(() => {
+		return () => stopRetry();
+	}, []);
 
 	return (
 		<>
 			<form className={styles.authForm} onSubmit={handleSubmit(onLogin)}>
 				<h1>Вход в систему</h1>
 
-				<EmailField
-					register={register("email")}
-					// subContent={<p>Обязательное поле!</p>}
-				/>
-				<PasswordField
-					register={register("password")}
-					// subContent={<p>Обязательное поле!</p>}
-				/>
+				<EmailField register={register("email")} />
+				<PasswordField register={register("password")} />
 
 				<div className={styles.authForm__buttonsContainer}>
 					<ButtonText textColor="var(--white-color)" type="submit">
@@ -94,15 +137,10 @@ export default function LoginForm() {
 
 			<div
 				className={cn(styles.authForm__animationContainer, {
-					[styles.authForm__isLoading]: isLoading,
+					[styles.authForm__isLoading]:
+						isLoading || isRetryingRef.current,
 				})}
-			></div>
-
-			{/* {isError && (
-				<p className={styles.errorResponse}>
-					Ошибка! Неверная почта или пароль
-				</p>
-			)} */}
+			/>
 		</>
 	);
 }

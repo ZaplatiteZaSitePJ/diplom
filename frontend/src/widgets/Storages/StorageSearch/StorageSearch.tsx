@@ -38,7 +38,10 @@ const StorageSearch: FC<StorageSearchProps> = ({
 			style={
 				mode == "search"
 					? { backgroundColor: "var(--blue-color)" }
-					: { backgroundColor: "var(--dark-blue-color)" }
+					: {
+							backgroundColor: "var(--dark-blue-color)",
+							width: "100%",
+						}
 			}
 		>
 			<form className={styles.storageSearch__form}>

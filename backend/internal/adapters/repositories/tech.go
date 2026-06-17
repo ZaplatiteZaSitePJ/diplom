@@ -22,9 +22,14 @@ func NewTechRepository(db *sql.DB) *TechRepository {
 
 func (r *TechRepository) Save(t *domain.Tech) (*domain.Tech, error) {
 	queryItem := `
-		INSERT INTO items 
-		(id, universal_name, type_id, category_id, last_storage_id, last_worker_id, transfer_status, quality_status, purchase_price, occupied_cells)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+		INSERT INTO items
+			(id, universal_name, type_id, category_id,
+			last_storage_id, last_worker_id,
+			transfer_status, quality_status,
+			purchase_price, occupied_cells,
+			post_number)
+			VALUES
+			($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
 	`
 
 	queryTech := `
@@ -50,6 +55,7 @@ func (r *TechRepository) Save(t *domain.Tech) (*domain.Tech, error) {
 		t.QualityStatus,
 		t.PurchasePrice,
 		t.OccupiedCells,
+		t.PostNumber,
 	)
 
 	if err != nil {
@@ -91,8 +97,9 @@ func (r *TechRepository) Change(id uuid.UUID, t *domain.Tech) (*domain.Tech, err
 			transfer_status=$6,
 			quality_status=$7,
 			purchase_price=$8,
-			occupied_cells=$9
-		WHERE id=$10
+			occupied_cells=$9,
+			post_number=$10
+		WHERE id=$11
 	`
 
 	queryTech := `
@@ -120,6 +127,7 @@ func (r *TechRepository) Change(id uuid.UUID, t *domain.Tech) (*domain.Tech, err
 		t.QualityStatus,
 		t.PurchasePrice,
 		t.OccupiedCells,
+		t.PostNumber,
 		id,
 	)
 
@@ -165,7 +173,8 @@ func (r *TechRepository) FindByID(id uuid.UUID) (*domain.Tech, error) {
 			t.brand,
 			t.model,
 			t.warranty_started_at,
-			t.warranty_end_at
+			t.warranty_end_at,
+			i.post_number
 		FROM items i
 		JOIN tech t ON t.item_id = i.id
 		WHERE i.id = $1
@@ -188,6 +197,7 @@ func (r *TechRepository) FindByID(id uuid.UUID) (*domain.Tech, error) {
 		&item.Model,
 		&item.WarrantyStartedAt,
 		&item.WarrantyEndAt,
+		&item.PostNumber,
 	)
 
 	if err != nil {
@@ -219,7 +229,8 @@ func (r *TechRepository) FindAll(filter *dto.TechFilter) ([]*dto.TechItemPublic,
 			t.model,
 			t.warranty_started_at,
 			t.warranty_end_at,
-			i.universal_name
+			i.universal_name,
+			i.post_number
 		FROM items i
 		JOIN tech t ON t.item_id = i.id
 		LEFT JOIN storages s ON s.id = i.last_storage_id
@@ -320,6 +331,7 @@ func (r *TechRepository) FindAll(filter *dto.TechFilter) ([]*dto.TechItemPublic,
 			&item.WarrantyStartedAt,
 			&item.WarrantyEndAt,
 			&item.UniversalName,
+			&item.PostNumber,
 		)
 		if err != nil {
 			logger.Error("row scan error:", err)

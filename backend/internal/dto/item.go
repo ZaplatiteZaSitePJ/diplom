@@ -17,6 +17,8 @@ type TechItemPublic struct {
 	QualityStatus     string    `json:"quality_status"`
 	PurchasePrice     float64   `json:"purchase_price"`
 	OccupiedCells     int       `json:"occupied_cells"`
+	LastStorageID *uuid.UUID `json:"last_storage_id"`
+	PostNumber *string `json:"post_number,omitempty"`
 
 	Brand             string    `json:"brand"`
 	Model             string    `json:"model"`
@@ -30,6 +32,7 @@ type TechFilter struct {
 	Model         *string `json:"model"`
 	LastWorker    *string `json:"last_worker"`    // email или имя
 	LastStorage   *string `json:"last_storage"`
+	LastStorageID *uuid.UUID `json:"last_storage_id"`
 	Category      *string `json:"category"`
 	QualityStatus *string `json:"quality_status"`
 	TransferStatus *string `json:"transfer_status"`

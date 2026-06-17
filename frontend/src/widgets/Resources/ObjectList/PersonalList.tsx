@@ -1,11 +1,40 @@
 import styles from "./ObjectList.module.scss";
-import { useGetUsersQuery } from "@app/api/users/usersAPI";
+
+import { useGetMeByIdQuery, useGetUsersQuery } from "@app/api/users/usersAPI";
+
 import type { UserType } from "@entities/User/types/user.type";
+
 import { useNavigate } from "react-router-dom";
 
-const UserList = ({ filter }: { filter: Partial<UserType> }) => {
+type UserListProps = {
+	filter: Partial<UserType>;
+	mode?: "search" | "replace";
+	onSelect?: (user: UserType) => void;
+	isFull?: boolean;
+};
+
+const UserList = ({ filter, mode = "search", onSelect }: UserListProps) => {
 	const { data: users } = useGetUsersQuery(filter);
+
 	const navigate = useNavigate();
+
+	const { data: currentUser } = useGetMeByIdQuery(undefined);
+
+	const handleClick = (user: UserType) => {
+		// replace mode
+		if (mode === "replace" && onSelect) {
+			onSelect(user);
+			return;
+		}
+
+		// default navigation mode
+		if (user.id === currentUser?.data?.id) {
+			navigate("/profile");
+			return;
+		}
+
+		navigate(`/personal/${user.id}`);
+	};
 
 	return (
 		<div className={styles.objectList}>
@@ -26,14 +55,19 @@ const UserList = ({ filter }: { filter: Partial<UserType> }) => {
 						{users.data.map((el: UserType) => (
 							<tr
 								key={el.id}
-								onClick={() => navigate(`/personal/${el.id}`)}
+								onClick={() => handleClick(el)}
 								className={styles.row}
 							>
 								<td>{el.lastname}</td>
+
 								<td>{el.name}</td>
+
 								<td>{el.email}</td>
+
 								<td>{el.post}</td>
+
 								<td>{el.grade}</td>
+
 								<td>{el.city}</td>
 							</tr>
 						))}

@@ -1,15 +1,33 @@
+import { useEffect, useState, type FC } from "react";
+
 import styles from "./FormSearch.module.scss";
+
 import { useForm } from "react-hook-form";
+
 import { Input } from "@shared/ui/ui-kit";
-import { useState } from "react";
+
 import cn from "classnames";
+
 import ObjectList from "../ObjectList/PersonalList";
+
 import type { UserType } from "@entities/User/types/user.type";
 
 type UserFilter = Partial<UserType>;
 
-const PersonalSearch = () => {
-	const { register, watch } = useForm<UserFilter>();
+type PersonalSearchProps = {
+	mode?: "search" | "replace";
+	user?: UserType;
+	onSelect?: (user: UserType) => void;
+	isFull?: boolean;
+};
+
+const PersonalSearch: FC<PersonalSearchProps> = ({
+	mode = "search",
+	user,
+	onSelect,
+	isFull = false,
+}) => {
+	const { register, watch, reset } = useForm<UserFilter>();
 
 	const [isWrapped, setWrapped] = useState<boolean>(false);
 
@@ -18,6 +36,14 @@ const PersonalSearch = () => {
 	};
 
 	const rawValues = watch();
+
+	useEffect(() => {
+		if (!user) return;
+
+		reset({
+			city: user.city || "",
+		});
+	}, [user, reset]);
 
 	const filter: UserFilter = {
 		id: rawValues.id ?? undefined,
@@ -29,10 +55,18 @@ const PersonalSearch = () => {
 		city: rawValues.city ?? undefined,
 	};
 
-	console.log("Form changed:", filter);
-
 	return (
-		<div className={styles.objectFormSearch}>
+		<div
+			className={styles.objectFormSearch}
+			style={
+				mode === "search"
+					? {}
+					: {
+							backgroundColor: "var(--dark-blue-color)",
+							width: "100%",
+						}
+			}
+		>
 			<form
 				className={styles.objectFormSearch__filter}
 				style={
@@ -42,16 +76,21 @@ const PersonalSearch = () => {
 								overflow: "auto",
 								boxShadow: "0 12px 30px rgba(0, 0, 0, 0.75)",
 							}
-						: { height: "138px", overflow: "hidden" }
+						: {
+								height: "138px",
+								overflow: "hidden",
+							}
 				}
 			>
 				<div className={styles.objectFormSearch__filterContainer}>
 					<Input label="ID" register={register("id")} width="240px" />
+
 					<Input
 						label="Имя"
 						register={register("name")}
 						width="240px"
 					/>
+
 					<Input
 						label="Фамилия"
 						register={register("lastname")}
@@ -62,7 +101,13 @@ const PersonalSearch = () => {
 				<div
 					className={styles.objectFormSearch__filterContainer}
 					style={
-						isWrapped ? { display: "flex" } : { display: "none" }
+						isWrapped
+							? {
+									display: "flex",
+								}
+							: {
+									display: "none",
+								}
 					}
 				>
 					<Input
@@ -70,16 +115,19 @@ const PersonalSearch = () => {
 						register={register("email")}
 						width="240px"
 					/>
+
 					<Input
 						label="Должность"
 						register={register("post")}
 						width="240px"
 					/>
+
 					<Input
 						label="Грейд"
 						register={register("grade")}
 						width="240px"
 					/>
+
 					<Input
 						label="Город"
 						register={register("city")}
@@ -99,7 +147,12 @@ const PersonalSearch = () => {
 			</button>
 
 			<div className={styles.objectFormSearch__objectListPlace}>
-				<ObjectList filter={filter} />
+				<ObjectList
+					filter={filter}
+					mode={mode}
+					onSelect={onSelect}
+					isFull={isFull}
+				/>
 			</div>
 		</div>
 	);

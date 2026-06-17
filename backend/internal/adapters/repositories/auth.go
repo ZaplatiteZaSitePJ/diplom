@@ -24,9 +24,24 @@ func NewAuthRepository(db *sql.DB) *AuthRepository {
 func (authRepo *AuthRepository) FindByEmail(email string) (*domain.User, error) {
 	findedUser := &domain.User{}
 	
-	userQuery := "SELECT id, email, hashed_password, role FROM users WHERE email = $1"
+	userQuery := `
+		SELECT
+			id,
+			email,
+			hashed_password,
+			role,
+			is_active
+		FROM users
+		WHERE email = $1
+	`
 
-	err := authRepo.db.QueryRow(userQuery, email).Scan(&findedUser.ID, &findedUser.Email, &findedUser.HashedPassword, &findedUser.Role)
+	err := authRepo.db.QueryRow(userQuery, email).Scan(
+		&findedUser.ID,
+		&findedUser.Email,
+		&findedUser.HashedPassword,
+		&findedUser.Role,
+		&findedUser.IsActive,
+	)
 
 	if err != nil {
 		logger.Error("db", err)
@@ -97,4 +112,96 @@ func (authRepo *AuthRepository) DeactivateRefreshToken(refresh string) error {
 	}
 
 	return nil
+}
+
+func (authRepo *AuthRepository) CreateActivationToken(
+	userID uuid.UUID,
+	token string,
+	expiresAt time.Time,
+) error {
+
+	query := `
+		INSERT INTO activation_tokens (
+			id,
+			user_id,
+			token,
+			expires_at
+		)
+		VALUES ($1, $2, $3, $4)
+	`
+
+	_, err := authRepo.db.Exec(
+		query,
+		uuid.New(),
+		userID,
+		token,
+		expiresAt,
+	)
+
+	return err
+}
+
+func (authRepo *AuthRepository) FindActivationToken(
+	token string,
+) (*domain.ActivationToken, error) {
+
+	act := &domain.ActivationToken{}
+
+	query := `
+		SELECT
+			id,
+			user_id,
+			token,
+			expires_at,
+			used
+		FROM activation_tokens
+		WHERE token = $1
+	`
+
+	err := authRepo.db.QueryRow(
+		query,
+		token,
+	).Scan(
+		&act.ID,
+		&act.UserID,
+		&act.Token,
+		&act.ExpiresAt,
+		&act.Used,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return act, nil
+}
+
+func (authRepo *AuthRepository) ActivateUser(
+	userID uuid.UUID,
+) error {
+
+	query := `
+		UPDATE users
+		SET is_active = true
+		WHERE id = $1
+	`
+
+	_, err := authRepo.db.Exec(query, userID)
+
+	return err
+}
+
+func (authRepo *AuthRepository) MarkActivationTokenUsed(
+	token string,
+) error {
+
+	query := `
+		UPDATE activation_tokens
+		SET used = true
+		WHERE token = $1
+	`
+
+	_, err := authRepo.db.Exec(query, token)
+
+	return err
 }

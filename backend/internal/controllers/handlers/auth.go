@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"inno-accounting/pkg/server_utils/response_message"
 	"net/http"
+	"strings"
 )
 
 func (h *Handlers) Login(w http.ResponseWriter, r *http.Request) {
@@ -20,6 +21,10 @@ func (h *Handlers) Login(w http.ResponseWriter, r *http.Request) {
 
 	access, refresh, role, err := h.Auth.Login(req.Email, req.Password)
 	if err != nil {
+		if strings.Contains(err.Error(), "confirm email first") {
+			response_message.WrapperResponseJSON(w, 422, "confirm email first")
+			return
+		}
 		response_message.WrapperResponseJSON(w, 401, "invalid credentials")
 		return
 	}
@@ -85,4 +90,37 @@ func (h *Handlers) Logout(w http.ResponseWriter, r *http.Request) {
 	})
 
 	response_message.WrapperResponseJSON(w, 200, "logout success")
+}
+
+func (h *Handlers) Activate(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+
+	token := r.URL.Query().Get("token")
+
+	if token == "" {
+		response_message.WrapperResponseJSON(
+			w,
+			400,
+			"token required",
+		)
+		return
+	}
+
+	err := h.Auth.Activate(token)
+	if err != nil {
+		response_message.WrapperResponseJSON(
+			w,
+			400,
+			err.Error(),
+		)
+		return
+	}
+
+	response_message.WrapperResponseJSON(
+		w,
+		200,
+		"account activated",
+	)
 }

@@ -3,7 +3,6 @@ package auth
 import (
 	"inno-accounting/internal/use-cases/user"
 	"inno-accounting/pkg/crypt_password"
-	"inno-accounting/pkg/logger"
 	"inno-accounting/pkg/server_utils/app_errors"
 	"time"
 
@@ -15,11 +14,12 @@ type TokenManager interface {
 	ValidateRefresh(token string) (uuid.UUID, error)
 }
 
-func New(repo AuthRepository, userService *user.UserService, tokens TokenManager) *AuthService {
+func New(repo AuthRepository, userService *user.UserService, tokens TokenManager, mailer EmailSender) *AuthService {
 	return &AuthService{
 		repo:   repo,
 		user:   userService,
 		tokens: tokens,
+		mailer: mailer,
 	}
 }
 
@@ -27,28 +27,79 @@ type AuthService struct {
 	repo   AuthRepository
 	user   *user.UserService
 	tokens TokenManager
+	mailer EmailSender
 }
 
-func (a *AuthService) Login(email, password string) (string, string, string, error) {
+func (a *AuthService) Login(
+	email,
+	password string,
+) (string, string, string, error) {
+
 	user, err := a.repo.FindByEmail(email)
-	if err != nil {
-		return "", "", "", app_errors.Unprocessable("No user match this email", err)
-	}
-
-	err = crypt_password.CompareWithHash(user.HashedPassword, password)
-	if err != nil {
-		logger.Info("service", err)
-		return "", "", "", app_errors.Unprocessable("Wrong password", err)
-	}
-
-	access, refresh, err := a.tokens.GenerateTokens(user.ID, user.Role)
 	if err != nil {
 		return "", "", "", err
 	}
 
-	expireAt := time.Now().Add(7 * 24 * time.Hour)
+	err = crypt_password.CompareWithHash(
+		user.HashedPassword,
+		password,
+	)
 
-	err = a.repo.SaveRefreshToken(user.ID, refresh, expireAt)
+	if err != nil {
+		return "", "", "", err
+	}
+
+	// EMAIL NOT CONFIRMED
+	if !user.IsActive {
+
+		token := uuid.New().String()
+
+		err = a.repo.CreateActivationToken(
+			user.ID,
+			token,
+			time.Now().Add(24*time.Hour),
+		)
+
+		if err != nil {
+			return "", "", "", err
+		}
+
+		err = a.mailer.SendActivationEmail(
+			user.Email,
+			token,
+		)
+
+		if err != nil {
+			return "", "", "", err
+		}
+
+		return "", "", "", app_errors.Unprocessable(
+			"confirm email first",
+			nil,
+		)
+	}
+
+	// NORMAL LOGIN
+
+	access, refresh, err := a.tokens.GenerateTokens(
+		user.ID,
+		user.Role,
+	)
+
+	if err != nil {
+		return "", "", "", err
+	}
+
+	expireAt := time.Now().Add(
+		7 * 24 * time.Hour,
+	)
+
+	err = a.repo.SaveRefreshToken(
+		user.ID,
+		refresh,
+		expireAt,
+	)
+
 	if err != nil {
 		return "", "", "", err
 	}
@@ -109,3 +160,40 @@ func (a *AuthService) Logout(refreshToken string) error {
 
 	return nil
 }
+
+func (a *AuthService) Activate(
+	token string,
+) error {
+
+	act, err := a.repo.FindActivationToken(token)
+	if err != nil {
+		return err
+	}
+
+	if act.Used {
+		return app_errors.Unprocessable(
+			"token already used",
+			nil,
+		)
+	}
+
+	if time.Now().After(act.ExpiresAt) {
+		return app_errors.Unprocessable(
+			"token expired",
+			nil,
+		)
+	}
+
+	err = a.repo.ActivateUser(act.UserID)
+	if err != nil {
+		return err
+	}
+
+	err = a.repo.MarkActivationTokenUsed(token)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+

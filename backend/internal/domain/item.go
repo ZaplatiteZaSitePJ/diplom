@@ -17,6 +17,7 @@ type Item struct {
 	QualityStatus  *string    `db:"quality_status" json:"quality_status"`
 	PurchasePrice  *float64   `db:"purchase_price" json:"purchase_price"`
 	OccupiedCells  *int       `db:"occupied_cells" json:"occupied_cells"`
+	PostNumber     *string `db:"post_number" json:"post_number"`
 }
 
 type Tech struct {
