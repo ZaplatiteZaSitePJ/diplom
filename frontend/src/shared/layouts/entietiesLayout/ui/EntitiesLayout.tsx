@@ -10,6 +10,7 @@ import ItemDeleteModal from "@widgets/DeleteModal/ObjectDelete";
 import StorageDeleteModal from "@widgets/DeleteModal/StorageDelete";
 import { useLogoutMutation } from "@app/api/auth/authAPI";
 import { enqueueSnackbar } from "notistack";
+import { ImportTechCsvButton } from "@widgets/Resources/ImportTechButtons";
 
 //
 // 🔹 BaseLayout (общая обёртка)
@@ -161,9 +162,21 @@ export const StorageLayout: FC<EntitiesLayoutProps> = ({
 				subTitle={subTitle}
 				actions={
 					<>
-						<ButtonFilled onClick={() => setIsAddModalOpen(true)}>
-							Добавить объект
-						</ButtonFilled>
+						<div>
+							<ButtonFilled
+								onClick={() => setIsAddModalOpen(true)}
+								style={{ marginRight: "16px" }}
+							>
+								Добавить объект
+							</ButtonFilled>
+
+							<ImportTechCsvButton
+								storageName={entitie?.storageName}
+								free_cells_ammount={
+									entitie?.capacity - entitie?.occupied_cells
+								}
+							/>
+						</div>
 
 						<ButtonBorderred
 							borderColor="var(--red-color)"

@@ -15,7 +15,7 @@ const ButtonBordered = styled(Button)<CustomButtonProps>(
 		fontSize: "var(--normal-font-size)",
 		fontWeight: "bold",
 		borderRadius: "1rem",
-		border: `0.2rem solid ${borderColor}`,
+		border: `0.125rem solid ${borderColor}`,
 		padding: "0.5rem 2rem",
 		textTransform: "none",
 		transition: "ease-in 0.2s",
@@ -23,7 +23,7 @@ const ButtonBordered = styled(Button)<CustomButtonProps>(
 		"&:hover": {
 			backgroundColor: borderColor,
 		},
-	})
+	}),
 );
 
 export default ButtonBordered;

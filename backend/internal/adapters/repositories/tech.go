@@ -23,13 +23,20 @@ func NewTechRepository(db *sql.DB) *TechRepository {
 func (r *TechRepository) Save(t *domain.Tech) (*domain.Tech, error) {
 	queryItem := `
 		INSERT INTO items
-			(id, universal_name, type_id, category_id,
-			last_storage_id, last_worker_id,
-			transfer_status, quality_status,
-			purchase_price, occupied_cells,
-			post_number)
-			VALUES
-			($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+(
+    id,
+    universal_name,
+    type_id,
+    category_id,
+    last_storage_id,
+    last_worker_id,
+    transfer_status,
+    quality_status,
+    purchase_price,
+    occupied_cells
+)
+VALUES
+($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
 	`
 
 	queryTech := `
@@ -55,7 +62,6 @@ func (r *TechRepository) Save(t *domain.Tech) (*domain.Tech, error) {
 		t.QualityStatus,
 		t.PurchasePrice,
 		t.OccupiedCells,
-		t.PostNumber,
 	)
 
 	if err != nil {
@@ -72,6 +78,49 @@ func (r *TechRepository) Save(t *domain.Tech) (*domain.Tech, error) {
 		t.WarrantyStartedAt,
 		t.WarrantyEndAt,
 	)
+
+	if t.PostNumber != nil {
+
+		_, err = tx.Exec(`
+			UPDATE item_movement
+				SET is_actual = false
+				WHERE item_id = $1
+				AND is_actual = true
+		`, t.PostNumber)
+
+		if err != nil {
+			tx.Rollback()
+			return nil, custom_errors.New(err, 500)
+		}
+
+		queryMovement := `
+			INSERT INTO item_movement
+			(
+				item_id,
+				post_number,
+				"from",
+				"to",
+				sended_at,
+				arrived_at,
+				is_actual
+			)
+			VALUES ($1,$2,$3,$4,$5,$6,true)
+		`
+
+		_, err = tx.Exec(
+			queryMovement,
+			t.ID,
+			t.MovementFrom,
+			t.MovementTo,
+			t.SendedAt,
+			t.ArrivedAt,
+		)
+
+		if err != nil {
+			tx.Rollback()
+			return nil, custom_errors.New(err, 500)
+		}
+	}
 
 	if err != nil {
 		tx.Rollback()
@@ -97,9 +146,8 @@ func (r *TechRepository) Change(id uuid.UUID, t *domain.Tech) (*domain.Tech, err
 			transfer_status=$6,
 			quality_status=$7,
 			purchase_price=$8,
-			occupied_cells=$9,
-			post_number=$10
-		WHERE id=$11
+			occupied_cells=$9
+		WHERE id=$10
 	`
 
 	queryTech := `
@@ -127,10 +175,8 @@ func (r *TechRepository) Change(id uuid.UUID, t *domain.Tech) (*domain.Tech, err
 		t.QualityStatus,
 		t.PurchasePrice,
 		t.OccupiedCells,
-		t.PostNumber,
 		id,
 	)
-
 	if err != nil {
 		tx.Rollback()
 		return nil, custom_errors.New(err, 500)
@@ -144,10 +190,49 @@ func (r *TechRepository) Change(id uuid.UUID, t *domain.Tech) (*domain.Tech, err
 		t.WarrantyEndAt,
 		id,
 	)
-
 	if err != nil {
 		tx.Rollback()
 		return nil, custom_errors.New(err, 500)
+	}
+
+	if t.PostNumber != nil {
+		_, err = tx.Exec(`
+			UPDATE item_movement
+			SET is_actual = false
+			WHERE item_id = $1
+			  AND is_actual = true
+		`, id)
+
+		if err != nil {
+			tx.Rollback()
+			return nil, custom_errors.New(err, 500)
+		}
+
+		_, err = tx.Exec(`
+			INSERT INTO item_movement
+			(
+				item_id,
+				post_number,
+				"from",
+				"to",
+				sended_at,
+				arrived_at,
+				is_actual
+			)
+			VALUES ($1,$2,$3,$4,$5,$6,true)
+		`,
+			id,
+			t.PostNumber,
+			t.MovementFrom,
+			t.MovementTo,
+			t.SendedAt,
+			t.ArrivedAt,
+		)
+
+		if err != nil {
+			tx.Rollback()
+			return nil, custom_errors.New(err, 500)
+		}
 	}
 
 	if err := tx.Commit(); err != nil {
@@ -174,9 +259,17 @@ func (r *TechRepository) FindByID(id uuid.UUID) (*domain.Tech, error) {
 			t.model,
 			t.warranty_started_at,
 			t.warranty_end_at,
-			i.post_number
+			im."from",
+			im."to",
+			im.sended_at,
+			im.arrived_at,
+			im.post_number,
+			im.is_actual
 		FROM items i
 		JOIN tech t ON t.item_id = i.id
+		LEFT JOIN item_movement im
+			ON im.item_id = i.id
+			AND im.is_actual = true
 		WHERE i.id = $1
 	`
 
@@ -197,7 +290,12 @@ func (r *TechRepository) FindByID(id uuid.UUID) (*domain.Tech, error) {
 		&item.Model,
 		&item.WarrantyStartedAt,
 		&item.WarrantyEndAt,
+		&item.MovementFrom,
+		&item.MovementTo,
+		&item.SendedAt,
+		&item.ArrivedAt,
 		&item.PostNumber,
+		&item.IsActual,
 	)
 
 	if err != nil {
@@ -230,12 +328,20 @@ func (r *TechRepository) FindAll(filter *dto.TechFilter) ([]*dto.TechItemPublic,
 			t.warranty_started_at,
 			t.warranty_end_at,
 			i.universal_name,
-			i.post_number
+			im."from",
+			im."to",
+			im.sended_at,
+			im.arrived_at,
+			im.is_actual,
+			im.post_number
 		FROM items i
 		JOIN tech t ON t.item_id = i.id
 		LEFT JOIN storages s ON s.id = i.last_storage_id
 		LEFT JOIN users u ON u.id = i.last_worker_id
 		LEFT JOIN categories c ON c.id = i.category_id
+		LEFT JOIN item_movement im
+			ON im.item_id = i.id
+			AND im.is_actual = true
 		WHERE i.type_id = 0
 	`
 
@@ -331,6 +437,11 @@ func (r *TechRepository) FindAll(filter *dto.TechFilter) ([]*dto.TechItemPublic,
 			&item.WarrantyStartedAt,
 			&item.WarrantyEndAt,
 			&item.UniversalName,
+			&item.MovementFrom,
+			&item.MovementTo,
+			&item.SendedAt,
+			&item.ArrivedAt,
+			&item.IsActual,
 			&item.PostNumber,
 		)
 		if err != nil {

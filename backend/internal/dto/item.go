@@ -20,6 +20,12 @@ type TechItemPublic struct {
 	LastStorageID *uuid.UUID `json:"last_storage_id"`
 	PostNumber *string `json:"post_number,omitempty"`
 
+	MovementFrom *string    `json:"movement_from,omitempty"`
+    MovementTo   *string    `json:"movement_to,omitempty"`
+    SendedAt     *time.Time `json:"sended_at,omitempty"`
+    ArrivedAt    *time.Time `json:"arrived_at,omitempty"`
+    IsActual     *bool      `json:"is_actual,omitempty"`
+
 	Brand             string    `json:"brand"`
 	Model             string    `json:"model"`
 	WarrantyStartedAt *time.Time `json:"warranty_started_at"`

@@ -17,7 +17,13 @@ type Item struct {
 	QualityStatus  *string    `db:"quality_status" json:"quality_status"`
 	PurchasePrice  *float64   `db:"purchase_price" json:"purchase_price"`
 	OccupiedCells  *int       `db:"occupied_cells" json:"occupied_cells"`
+	
 	PostNumber     *string `db:"post_number" json:"post_number"`
+    MovementFrom *string    `db:"movement_from" json:"movement_from"`
+    MovementTo   *string    `db:"movement_to" json:"movement_to"`
+    SendedAt     *time.Time `db:"sended_at" json:"sended_at"`
+    ArrivedAt    *time.Time `db:"arrived_at" json:"arrived_at"`
+    IsActual     *bool      `db:"is_actual" json:"is_actual"`
 }
 
 type Tech struct {

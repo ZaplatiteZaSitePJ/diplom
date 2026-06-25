@@ -21,6 +21,8 @@ export const techDataForPush = (data: TechItem) => {
 		// даты → ISO через helper
 		warranty_started_at: fromISODate(data.warranty_started_at),
 		warranty_end_at: fromISODate(data.warranty_end_at),
+		sended_at: fromISODate(data.sended_at),
+		arrived_at: fromISODate(data.arrived_at),
 	};
 };
 

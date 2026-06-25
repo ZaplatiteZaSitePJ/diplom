@@ -87,6 +87,11 @@ func (t *TechService) CreateTech(input *dto.TechItemPublic) (*domain.Tech, error
 			PurchasePrice:  purchasePrice,
 			TypeID:         0,
 			PostNumber: input.PostNumber,
+			MovementFrom: input.MovementFrom,
+			MovementTo:   input.MovementTo,
+			SendedAt:     input.SendedAt,
+			ArrivedAt:    input.ArrivedAt,
+			IsActual:     input.IsActual,
 		},
 		Brand:             input.Brand,
 		Model:             input.Model,
@@ -167,6 +172,10 @@ func (t *TechService) FindTechByID(techID uuid.UUID) (*dto.TechItemPublic, error
 		UniversalName:     tech.UniversalName,
 		LastStorageID: tech.LastStorageID,
 		PostNumber: tech.PostNumber,
+		SendedAt: tech.SendedAt,
+		ArrivedAt: tech.ArrivedAt,
+		MovementFrom: tech.MovementFrom,
+		MovementTo: tech.MovementTo,
 	}, nil
 }
 
@@ -214,14 +223,16 @@ func (t *TechService) ChangeTechByID(techID uuid.UUID, input *dto.TechItemPublic
 	if input.Brand != "" {
 		existingTech.Brand = input.Brand
 	}
+
 	if input.Model != "" {
 		existingTech.Model = input.Model
 	}
 
-	if !input.WarrantyStartedAt.IsZero() {
+	if input.WarrantyStartedAt != nil && !input.WarrantyStartedAt.IsZero() {
 		existingTech.WarrantyStartedAt = input.WarrantyStartedAt
 	}
-	if !input.WarrantyEndAt.IsZero() {
+
+	if input.WarrantyEndAt != nil && !input.WarrantyEndAt.IsZero() {
 		existingTech.WarrantyEndAt = input.WarrantyEndAt
 	}
 
@@ -261,8 +272,29 @@ func (t *TechService) ChangeTechByID(techID uuid.UUID, input *dto.TechItemPublic
 		existingTech.PurchasePrice = &input.PurchasePrice
 	}
 
-	if *input.PostNumber != "" {
+	// --- movement
+	if input.PostNumber != nil && *input.PostNumber != "" {
 		existingTech.PostNumber = input.PostNumber
+	}
+
+	if input.MovementFrom != nil {
+		existingTech.MovementFrom = input.MovementFrom
+	}
+
+	if input.MovementTo != nil {
+		existingTech.MovementTo = input.MovementTo
+	}
+
+	if input.SendedAt != nil && !input.SendedAt.IsZero() {
+		existingTech.SendedAt = input.SendedAt
+	}
+
+	if input.ArrivedAt != nil && !input.ArrivedAt.IsZero() {
+		existingTech.ArrivedAt = input.ArrivedAt
+	}
+
+	if input.IsActual != nil {
+		existingTech.IsActual = input.IsActual
 	}
 
 	// --- quality
@@ -275,7 +307,7 @@ func (t *TechService) ChangeTechByID(techID uuid.UUID, input *dto.TechItemPublic
 		existingTech.TransferStatus = input.TransferStatus
 	}
 
-	// --- universal name (важно!)
+	// --- universal name
 	existingTech.UniversalName = existingTech.Brand + " " + existingTech.Model
 
 	return t.repo.Change(techID, existingTech)
